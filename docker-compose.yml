@@ -1,0 +1,23 @@
+services:
+  main:
+    container_name: main
+    build: ./src
+    ports:
+      - "8000:8000"
+    volumes:
+      - database:/app/db
+    restart: always
+
+  # ssh-tunnel:
+  #   build: ./ssh_tunnel
+  #   container_name: ssh_tunnel
+  #   restart: always
+  #   stop_grace_period: 2s
+  #   command: >
+  #     --defaults 
+  #     --service_on=http:yandexformstestbot.pagekite.me:main:8000:cc6f9ka33aza36cka342x873z7z3ced2 
+  #     --logfile=./logs.txt
+
+
+volumes:
+  database:
