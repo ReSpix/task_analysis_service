@@ -7,6 +7,8 @@ services:
     volumes:
       - database:/app/db
     restart: always
+    env_file:
+      - .env
 
   # ssh-tunnel:
   #   build: ./ssh_tunnel
