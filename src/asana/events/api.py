@@ -1,4 +1,5 @@
-from .client import AsanaClient, AsanaApiError
+from ..client import AsanaClient, AsanaApiError
+from .events_parser import parse_events, clear_events
 import logging
 
 
@@ -19,12 +20,13 @@ class EventsApi:
         except AsanaApiError as e:
             if e.status == 412:
                 self._update_sync_token(e.body)
-                data = e.body
                 logging.info("Sync token missing or expired. Fetched new")
+                return e.body
             else:
                 raise
-
-        return data
+        
+        events = parse_events(data)
+        return clear_events(events)
 
     def _update_sync_token(self, source: dict):
         if 'sync' not in source:
