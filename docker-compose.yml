@@ -10,15 +10,15 @@ services:
     env_file:
       - .env
 
-  # ssh-tunnel:
-  #   build: ./ssh_tunnel
-  #   container_name: ssh_tunnel
-  #   restart: always
-  #   stop_grace_period: 2s
-  #   command: >
-  #     --defaults 
-  #     --service_on=http:yandexformstestbot.pagekite.me:main:8000:cc6f9ka33aza36cka342x873z7z3ced2 
-  #     --logfile=./logs.txt
+  ssh-tunnel:
+    build: ./ssh_tunnel
+    container_name: ssh_tunnel
+    restart: always
+    stop_grace_period: 2s
+    command: >
+      --defaults 
+      --service_on=http:yandexformstestbot.pagekite.me:main:8000:cc6f9ka33aza36cka342x873z7z3ced2 
+      --logfile=./logs.txt
 
 
 volumes:

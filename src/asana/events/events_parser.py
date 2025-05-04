@@ -4,7 +4,7 @@ from typing import Dict, List
 import logging
 from operator import attrgetter
 
-from models import Event, ActionType
+from ..models import Event, ActionType
 
 
 def parse_events(data: dict | List[dict]):

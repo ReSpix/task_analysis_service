@@ -5,6 +5,8 @@ from sys import stdout
 from lifespan import lifespan
 import asana
 import config_manager
+import json
+from core.receiver import receive_form
 
 logging.basicConfig(level=logging.INFO, stream=stdout,
                     format="%(asctime)s [%(levelname)s] %(message)s")
@@ -20,10 +22,21 @@ def status():
     return {"Im, ok"}
 
 
-@app.get("/asana-status")
-async def asana_status():
-    return await asana_client.workspaces()
+@app.get("/receive/{text}")
+async def asana_events(text: str):
+    data = json.loads(text)
+    await receive_form(data)
+    return {'Ok'}
 
-@app.get("/events")
-async def asana_events():
-    return await events_api.get_events()
+
+from database import Database
+from database.models import Ticket
+@app.get("/tickets")
+async def tickets():
+    async with Database.make_session() as session:
+        from sqlalchemy import select
+
+        result = await session.execute(select(Ticket))
+        tickets = result.scalars().all()
+    
+    return tickets
