@@ -12,7 +12,7 @@ import logging
 
 
 class AsyncDatabase:
-    db_url = 'sqlite+aiosqlite:///./db.sqlite'
+    db_url = f'sqlite+aiosqlite:///./database/db.sqlite'
 
     def __init__(self, echo=False):
         self.engine = create_async_engine(
