@@ -12,8 +12,8 @@ class TaskApi:
     async def publish_task(self, ticket: Ticket):
         url = 'tasks'
 
-        body = {'data': {'name': f"Челлендж {ticket.k7_id}",
-                         "notes": ticket.tasks,
+        body = {'data': {'name': f"Челлендж {ticket.additional_info.k7_id if ticket.additional_info is not None else ""}",
+                         "notes": ticket.text,
                          "projects": [MAIN_PROJECT_GID]
                          }}
 

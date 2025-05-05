@@ -1,3 +1,5 @@
+from database.models import Ticket
+from database import Database
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 import logging
@@ -7,12 +9,14 @@ import asana
 import config_manager
 import json
 from core.receiver import receive_form
+from sqlalchemy import select
 
 logging.basicConfig(level=logging.INFO, stream=stdout,
                     format="%(asctime)s [%(levelname)s] %(message)s")
 
 app = FastAPI(lifespan=lifespan)
-asana_client = asana.AsanaClient(config_manager.TOKEN, config_manager.MAIN_PROJECT_GID)
+asana_client = asana.AsanaClient(
+    config_manager.TOKEN, config_manager.MAIN_PROJECT_GID)
 events_api = asana.EventsApi(asana_client)
 # app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -29,14 +33,12 @@ async def asana_events(text: str):
     return {'Ok'}
 
 
-from database import Database
-from database.models import Ticket
 @app.get("/tickets")
 async def tickets():
     async with Database.make_session() as session:
-        from sqlalchemy import select
+        query = select(Ticket)
 
-        result = await session.execute(select(Ticket))
+        result = await session.execute(query)
         tickets = result.scalars().all()
-    
-    return tickets
+
+        return tickets
