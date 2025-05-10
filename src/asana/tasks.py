@@ -19,3 +19,4 @@ class TaskApi:
 
         res = await self._client.post(url, body)
         logging.info(res)
+        return res['data']['gid']

@@ -1,4 +1,4 @@
-from database.models import Ticket
+from database.models import Ticket, Status
 from database import Database
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -10,6 +10,8 @@ import config_manager
 import json
 from core.receiver import receive_form
 from sqlalchemy import select
+from core.events_handler import handle_events
+import asyncio
 
 logging.basicConfig(level=logging.INFO, stream=stdout,
                     format="%(asctime)s [%(levelname)s] %(message)s")
@@ -42,3 +44,21 @@ async def tickets():
         tickets = result.scalars().all()
 
         return tickets
+    
+
+@app.get("/statuses")
+async def statuses():
+    async with Database.make_session() as session:
+        query = select(Status)
+
+        result = await session.execute(query)
+        tickets = result.scalars().all()
+
+        return tickets
+
+
+@app.get("/events")
+async def events():
+    events = await events_api.get_events()
+    asyncio.create_task(handle_events(events))
+    return events

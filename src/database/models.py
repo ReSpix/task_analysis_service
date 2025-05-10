@@ -1,8 +1,9 @@
 from __future__ import annotations
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped, relationship
 from sqlalchemy import ForeignKey
 import logging
+from datetime import datetime
 
 
 class Base(DeclarativeBase):
@@ -15,7 +16,10 @@ class Ticket(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     gid: Mapped[Optional[str]]
     text: Mapped[str]
-    additional_info: Mapped[Optional["AdditionalTicketInfo"]] = relationship(back_populates="ticket", uselist=False, lazy='selectin')
+    additional_info: Mapped[Optional["AdditionalTicketInfo"]] = relationship(
+        back_populates="ticket", uselist=False, lazy='selectin')
+    status: Mapped[List["Status"]] = relationship(
+        back_populates="ticket", lazy='selectin')
 
     def __init__(self, text, **kwargs):
         self.text = text
@@ -25,7 +29,7 @@ class Ticket(Base):
         mapping = {'Задачи:': 'text'}
         kwargs = {mapping.get(k, k): v for k, v in data.items()}
         return cls(**kwargs)
-    
+
     @classmethod
     def full_ticket_from_dict(cls, data: Dict[str, Any]) -> Ticket:
         ticket = cls.from_dict(data)
@@ -44,7 +48,8 @@ class AdditionalTicketInfo(Base):
     manager: Mapped[Optional[str]]
     client: Mapped[str]
 
-    ticket_id: Mapped["Ticket"] = mapped_column(ForeignKey("tickets.id"), unique=True, nullable=False)
+    ticket_id: Mapped["Ticket"] = mapped_column(
+        ForeignKey("tickets.id"), unique=True, nullable=False)
     ticket: Mapped["Ticket"] = relationship(back_populates="additional_info")
 
     @classmethod
@@ -54,6 +59,17 @@ class AdditionalTicketInfo(Base):
                    'Офис': 'office',
                    'Менеджер по наряду': 'manager',
                    'Клиент:': 'client'}
-        data = {key: value for key, value in data.items() if key in mapping.keys()}
+        data = {key: value for key,
+                value in data.items() if key in mapping.keys()}
         kwargs = {mapping.get(k, k): v for k, v in data.items()}
         return cls(**kwargs)
+
+
+class Status(Base):
+    __tablename__ = "statuses"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    text: Mapped[str]
+    datetime: Mapped[datetime] = mapped_column(default=datetime.now())
+    ticket_id: Mapped["Ticket"] = mapped_column(ForeignKey("tickets.id"))
+    ticket: Mapped["Ticket"] = relationship(back_populates="status")

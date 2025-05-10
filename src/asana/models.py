@@ -7,6 +7,7 @@ from typing import Optional
 class Resource(BaseModel):
     gid: str
     type: str = Field(alias="resource_type")
+    name: Optional[str] = ""
 
 
 class ActionType(str, Enum):

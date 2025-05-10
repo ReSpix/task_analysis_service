@@ -18,7 +18,7 @@ def parse_events(data: dict | List[dict]):
         return []
 
 
-def clear_events(events: List[Event]):
+def clear_events(events: List[Event]) -> List[Event]:
     events_tasks: Dict[str, List[Event]] = defaultdict(list)
     events = deepcopy(events)
     for event in events:

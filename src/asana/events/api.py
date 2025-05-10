@@ -1,3 +1,6 @@
+from typing import List
+
+from ..models import Event
 from ..client import AsanaClient, AsanaApiError
 from .events_parser import parse_events, clear_events
 import logging
@@ -8,7 +11,7 @@ class EventsApi:
         self._client: AsanaClient = client
         self.sync: str = ""
 
-    async def get_events(self, resource: str = ""):
+    async def get_events(self, resource: str = "") -> List[Event]:
         if resource == "":
             resource = self._client.main_project_gid
 
@@ -21,7 +24,7 @@ class EventsApi:
             if e.status == 412:
                 self._update_sync_token(e.body)
                 logging.info("Sync token missing or expired. Fetched new")
-                return e.body
+                return e.body # TODO:
             else:
                 raise
         

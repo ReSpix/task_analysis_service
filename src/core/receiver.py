@@ -11,4 +11,6 @@ async def receive_form(data: dict):
         session.add(ticket)
 
         api = TaskApi()
-        asyncio.create_task(api.publish_task(ticket))
+        gid = await api.publish_task(ticket)
+        ticket.gid = gid
+        session.add(ticket)
