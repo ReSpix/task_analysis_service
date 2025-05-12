@@ -11,11 +11,13 @@
 <body>
     <table>
         <tr>
-            <th>Данные по наряду</th>
+            <th>Задача</th>
+            <th>Описание</th>
             <th>Статус</th>
         </tr>
         {% for ticket in tickets%}
         <tr>
+            <td class="text">{{ ticket.title }}</td>
             <td class="text">{{ ticket.text }}</td>
             <td class="text">{{ ticket.last_status.text }}</td>
         </tr>

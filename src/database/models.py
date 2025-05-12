@@ -43,9 +43,11 @@ class Ticket(Base):
             .scalar_subquery()
         )
 
-    def __init__(self, title, text, **kwargs):
+    def __init__(self, title, text, gid=None, **kwargs):
         self.text = text
         self.title = title
+        if gid is not None:
+            self.gid = gid
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> Ticket:

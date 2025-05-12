@@ -24,3 +24,17 @@ class Event(BaseModel):
     created_at: datetime
     resource: Resource
     parent: Optional[Resource]
+
+    def is_status_change_event(self) -> bool:
+        return \
+                self.action == ActionType.MOVED \
+            and self.parent is not None \
+            and self.parent.type == 'section' \
+            and self.resource.type == 'task'
+    
+    def is_new_task_added(self) -> bool:
+        return \
+                self.action == ActionType.ADDED \
+            and self.parent is not None \
+            and self.parent.type == 'project' \
+            and self.resource.type == 'task'

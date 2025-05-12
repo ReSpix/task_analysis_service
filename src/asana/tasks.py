@@ -20,3 +20,9 @@ class TaskApi:
         res = await self._client.post(url, body)
         # logging.info(res)
         return res['data']
+
+    async def get_task(self, gid: str):
+        url = f'tasks/{gid}'
+
+        res = await self._client.get(url)
+        return res['data']
