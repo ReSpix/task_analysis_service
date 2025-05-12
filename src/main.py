@@ -12,15 +12,17 @@ from core.receiver import receive_form
 from sqlalchemy import select
 from core.events_handler import handle_events
 import asyncio
+from web import web_router
 
 logging.basicConfig(level=logging.INFO, stream=stdout,
                     format="%(asctime)s [%(levelname)s] %(message)s")
 
 app = FastAPI(lifespan=lifespan)
+app.include_router(web_router)
 asana_client = asana.AsanaClient(
     config_manager.TOKEN, config_manager.MAIN_PROJECT_GID)
 events_api = asana.EventsApi(asana_client)
-# app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="web/static"), name="static")
 
 
 @app.get("/status")
@@ -33,28 +35,6 @@ async def asana_events(text: str):
     data = json.loads(text)
     await receive_form(data)
     return {'Ok'}
-
-
-@app.get("/tickets")
-async def tickets():
-    async with Database.make_session() as session:
-        query = select(Ticket)
-
-        result = await session.execute(query)
-        tickets = result.scalars().all()
-
-        return tickets
-    
-
-@app.get("/statuses")
-async def statuses():
-    async with Database.make_session() as session:
-        query = select(Status)
-
-        result = await session.execute(query)
-        tickets = result.scalars().all()
-
-        return tickets
 
 
 @app.get("/events")

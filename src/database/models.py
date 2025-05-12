@@ -2,6 +2,8 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped, relationship
 from sqlalchemy import ForeignKey
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy import select, desc
 import logging
 from datetime import datetime
 
@@ -18,8 +20,27 @@ class Ticket(Base):
     text: Mapped[str]
     additional_info: Mapped[Optional["AdditionalTicketInfo"]] = relationship(
         back_populates="ticket", uselist=False, lazy='selectin')
-    status: Mapped[List["Status"]] = relationship(
+    statuses: Mapped[List["Status"]] = relationship(
         back_populates="ticket", lazy='selectin')
+    
+    @hybrid_property
+    def last_status(self) -> Optional["Status"]:
+        """Возвращает последний статус тикета (с наибольшим datetime)"""
+        if not self.statuses:  # Если статусов нет
+            return None
+        return max(self.statuses, key=lambda s: s.datetime)
+    
+    @last_status.expression
+    def last_status_exp(cls):
+        """SQL-выражение для запросов, возвращающее последний статус"""
+        return (
+            select(Status)
+            .where(Status.ticket_id == cls.id)
+            .order_by(desc(Status.datetime))
+            .limit(1)
+            .correlate(cls)
+            .scalar_subquery()
+        )
 
     def __init__(self, text, **kwargs):
         self.text = text
@@ -72,4 +93,4 @@ class Status(Base):
     text: Mapped[str]
     datetime: Mapped[datetime] = mapped_column(default=datetime.now())
     ticket_id: Mapped["Ticket"] = mapped_column(ForeignKey("tickets.id"))
-    ticket: Mapped["Ticket"] = relationship(back_populates="status")
+    ticket: Mapped["Ticket"] = relationship(back_populates="statuses")

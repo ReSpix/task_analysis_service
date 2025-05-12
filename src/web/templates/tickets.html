@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отслеживание нарядов</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/main.css') }}">
+</head>
+
+<body>
+    <table>
+        <tr>
+            <th>Данные по наряду</th>
+            <th>Статус</th>
+        </tr>
+        {% for ticket in tickets%}
+        <tr>
+            <td class="text">{{ ticket.text }}</td>
+            <td class="text">{{ ticket.last_status.text }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+
+</html>
