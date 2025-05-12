@@ -5,10 +5,12 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - database:/app/db
+      - ./src:/app # DEV
+      # - database:/app/database # PROD
     restart: always
     env_file:
       - .env
+    command: --reload
 
   ssh-tunnel:
     build: ./ssh_tunnel
