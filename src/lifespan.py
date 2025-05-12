@@ -4,6 +4,7 @@ from typing import Callable
 from fastapi import FastAPI
 import logging
 from database import Database
+from core.events_handler import activate_scheduler
 
 
 @asynccontextmanager
@@ -27,6 +28,7 @@ def status_message(text: str):
 @status_message("Инициализация")
 async def startup():
     await Database.create_all()
+    activate_scheduler()
 
 
 @status_message("выключение")

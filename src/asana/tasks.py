@@ -12,7 +12,7 @@ class TaskApi:
     async def publish_task(self, ticket: Ticket):
         url = 'tasks'
 
-        body = {'data': {'name': f"Челлендж {ticket.additional_info.k7_id if ticket.additional_info is not None else ""}",
+        body = {'data': {'name': ticket.title,
                          "notes": ticket.text,
                          "projects": [MAIN_PROJECT_GID]
                          }}

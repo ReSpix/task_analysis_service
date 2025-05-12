@@ -17,6 +17,7 @@ class Ticket(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     gid: Mapped[Optional[str]]
+    title: Mapped[str]
     text: Mapped[str]
     additional_info: Mapped[Optional["AdditionalTicketInfo"]] = relationship(
         back_populates="ticket", uselist=False, lazy='selectin')
@@ -42,8 +43,9 @@ class Ticket(Base):
             .scalar_subquery()
         )
 
-    def __init__(self, text, **kwargs):
+    def __init__(self, title, text, **kwargs):
         self.text = text
+        self.title = title
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> Ticket:
@@ -53,8 +55,11 @@ class Ticket(Base):
 
     @classmethod
     def full_ticket_from_dict(cls, data: Dict[str, Any]) -> Ticket:
-        ticket = cls.from_dict(data)
         info = AdditionalTicketInfo.from_dict(data)
+        data['title'] = f"Челлендж {info.k7_id}"
+        logging.info(data)
+        ticket = cls.from_dict(data)
+        logging.info(ticket.title)
         ticket.additional_info = info
         return ticket
 
@@ -91,6 +96,14 @@ class Status(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     text: Mapped[str]
-    datetime: Mapped[datetime] = mapped_column(default=datetime.now())
+    datetime: Mapped[datetime] = mapped_column(default=datetime.now)    
     ticket_id: Mapped["Ticket"] = mapped_column(ForeignKey("tickets.id"))
     ticket: Mapped["Ticket"] = relationship(back_populates="statuses")
+
+
+class Config(Base):
+    __tablename__ = "config"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    key: Mapped[str] = mapped_column(unique=True)
+    value: Mapped[str]
