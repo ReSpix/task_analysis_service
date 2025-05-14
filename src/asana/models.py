@@ -19,22 +19,46 @@ class ActionType(str, Enum):
     MOVED = 'moved'
 
 
+class Change(BaseModel):
+    action: ActionType
+    field: str
+
+
 class Event(BaseModel):
     action: ActionType
     created_at: datetime
     resource: Resource
-    parent: Optional[Resource]
+    parent: Optional[Resource] = None
+    change: Optional[Change] = None
 
     def is_status_change_event(self) -> bool:
         return \
-                self.action == ActionType.MOVED \
+            self.action == ActionType.MOVED \
             and self.parent is not None \
             and self.parent.type == 'section' \
             and self.resource.type == 'task'
-    
+
     def is_new_task_added(self) -> bool:
         return \
-                self.action == ActionType.ADDED \
+            self.action == ActionType.ADDED \
             and self.parent is not None \
             and self.parent.type == 'project' \
+            and self.resource.type == 'task'
+    
+    def is_field_change(self) -> bool:
+        return \
+            self.action == ActionType.CHANGED \
+            and self.change is not None \
+            and self.change.action == ActionType.CHANGED \
+            and self.change.field in ["notes", "name", "completed"] \
+            and self.resource.type == 'task'
+
+    def is_deleted_task(self) -> bool:
+        return \
+            self.action == ActionType.DELETED \
+            and self.resource.type == 'task'
+    
+    def is_undeleted_task(self) -> bool:
+        return \
+            self.action == ActionType.UNDELETED \
             and self.resource.type == 'task'

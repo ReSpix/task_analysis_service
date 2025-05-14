@@ -6,6 +6,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy import select, desc
 import logging
 from datetime import datetime
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class Base(DeclarativeBase):
@@ -16,9 +17,11 @@ class Ticket(Base):
     __tablename__ = "tickets"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    gid: Mapped[Optional[str]]
+    gid: Mapped[Optional[str]] = mapped_column(unique=True)
     title: Mapped[str]
     text: Mapped[str]
+    completed: Mapped[bool] = mapped_column(default=False)
+    deleted: Mapped[bool] = mapped_column(default=False)
     additional_info: Mapped[Optional["AdditionalTicketInfo"]] = relationship(
         back_populates="ticket", uselist=False, lazy='selectin')
     statuses: Mapped[List["Status"]] = relationship(
@@ -63,6 +66,13 @@ class Ticket(Base):
         ticket = cls.from_dict(data)
         logging.info(ticket.title)
         ticket.additional_info = info
+        return ticket
+    
+    @classmethod
+    async def get_by_gid(cls, session: AsyncSession, gid: str) -> Optional[Ticket]:
+        query = select(Ticket).where(Ticket.gid == gid)
+        result = await session.execute(query)
+        ticket = result.scalars().first()
         return ticket
 
 

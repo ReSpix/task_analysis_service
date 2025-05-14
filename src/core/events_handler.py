@@ -35,13 +35,17 @@ async def handle_events(events: List[Event]):
             await on_section_moved(e)
         elif e.is_new_task_added():
             await on_new_task_added(e)
+        elif e.is_field_change():
+            await on_field_changed(e)
+        elif e.is_deleted_task():
+            await on_task_delete(e)
+        elif e.is_undeleted_task():
+            await on_task_undelete(e)
 
 
 async def on_section_moved(event: Event):
     async with Database.make_session() as session:
-        query = select(Ticket).where(Ticket.gid == event.resource.gid)
-        result = await session.execute(query)
-        ticket = result.scalars().first()
+        ticket = await Ticket.get_by_gid(session, event.resource.gid)
         if ticket is None:
             await on_new_task_added(event)
             return
@@ -53,9 +57,7 @@ async def on_section_moved(event: Event):
 
 async def on_new_task_added(event: Event):
     async with Database.make_session() as session:
-        query = select(Ticket).where(Ticket.gid == event.resource.gid)
-        result = await session.execute(query)
-        ticket = result.scalars().first()
+        ticket = await Ticket.get_by_gid(session, event.resource.gid)
 
         if ticket is not None:
             return
@@ -75,3 +77,42 @@ async def on_new_task_added(event: Event):
         status = Status(
             text=ticket_data['memberships'][0]['section']['name'], ticket=ticket)
         session.add(status)
+
+
+async def on_field_changed(event: Event):
+    async with Database.make_session() as session:
+        ticket = await Ticket.get_by_gid(session, event.resource.gid)
+
+        if ticket is None:
+            logging.warning(
+                f"Обновлено поле несущесвтующей задачи. gid={event.resource.gid}")
+            return
+
+        ticket_data = await task_api.get_task(event.resource.gid)
+        ticket.title = ticket_data['name']
+        ticket.text = ticket_data['notes']
+        ticket.completed = ticket_data['completed']
+
+        session.add(ticket)
+
+
+async def on_task_delete(event: Event):
+    async with Database.make_session() as session:
+        ticket = await Ticket.get_by_gid(session, event.resource.gid)
+        if ticket is None:
+            logging.warning(
+                f"Удалена несущесвтующая задачи. gid={event.resource.gid}")
+            return
+        ticket.deleted = True
+        session.add(ticket)
+
+
+async def on_task_undelete(event: Event):
+    async with Database.make_session() as session:
+        ticket = await Ticket.get_by_gid(session, event.resource.gid)
+        if ticket is None:
+            logging.warning(
+                f"Восстановлена несущесвтующая задачи. gid={event.resource.gid}")
+            return
+        ticket.deleted = False
+        session.add(ticket)
