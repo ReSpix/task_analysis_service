@@ -3,6 +3,7 @@ from database.models import Ticket, Status
 import logging
 from asana import task_api
 import asyncio
+from tgbot import TgBot
 
 async def receive_form(data: dict):
     logging.info("Received ticket")
@@ -18,3 +19,4 @@ async def receive_form(data: dict):
 
         session.add(status)
         session.add(ticket)
+    await TgBot.send_message(f"Получен {ticket.title}")

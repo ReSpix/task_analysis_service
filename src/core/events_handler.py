@@ -1,3 +1,4 @@
+from asana.events import EventsApi
 from typing import List
 from sqlalchemy import select
 from asana.client import AsanaApiError
@@ -8,13 +9,14 @@ import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from asana import events_api, task_api
 from config_manager import SUB_PROJECT_GID
+from tgbot import TgBot
 
 scheduler = AsyncIOScheduler()
 update_interval = 5
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
-from asana.events import EventsApi
 
 sub_events_api = EventsApi(events_api._client)
+
 
 async def request_events():
     events = await events_api.get_events()
@@ -48,6 +50,8 @@ async def handle_events(events: List[Event]):
             await on_task_undelete(e)
         elif e.is_tag_add():
             await on_tag_add(e)
+        elif e.is_tag_removed():
+            await on_tag_remove(e)
 
 
 async def on_section_moved(event: Event):
@@ -60,6 +64,7 @@ async def on_section_moved(event: Event):
         status = Status(text=event.parent.name, ticket=ticket)
         session.add(status)
         logging.info(f"Задача {ticket.title} перемещена в '{status.text}'")
+        await TgBot.send_message(f"Задача {ticket.title} перемещена в '{status.text}'")
 
 
 async def on_new_task_added(event: Event):
@@ -135,22 +140,40 @@ async def on_tag_add(event: Event):
         assert isinstance(res, dict)
 
         if 'data' not in res.keys():
-            logging.warning(f"Не удалось устновить задачу в проект {SUB_PROJECT_GID}")
+            logging.warning(
+                f"Не удалось устновить задачу в проект {SUB_PROJECT_GID}")
             return
-        
+
         logging.info(
             f"Задача {ticket_gid} установлена в проект {SUB_PROJECT_GID}")
-        
+
         res = await task_api.remove_from_project(ticket_gid, task_api._client.main_project_gid)
         logging.info(
             f"Задача {ticket_gid} удалена из проекта в проект {task_api._client.main_project_gid}")
-        
+
         async with Database.make_session() as session:
             ticket = await Ticket.get_by_gid(session, ticket_gid)
             if ticket is None:
-                logging.warning(f"Поставлен тег на неизвестную задачу gid={ticket_gid}")
+                logging.warning(
+                    f"Поставлен тег на неизвестную задачу gid={ticket_gid}")
                 return
             ticket.sub_contract = True
             session.add(ticket)
             status = Status(text='Суб подряд', ticket=ticket)
             session.add(status)
+
+
+async def on_tag_remove(event: Event):
+    assert event.parent is not None
+    assert event.parent.name is not None
+    if 'суб' in event.parent.name.lower() and 'подряд' in event.parent.name.lower():
+        ticket_gid = event.resource.gid
+
+        async with Database.make_session() as session:
+            ticket = await Ticket.get_by_gid(session, ticket_gid)
+            if ticket is None:
+                logging.warning(
+                    f"Удален тег с неизвестной задачи gid={ticket_gid}")
+                return
+            ticket.sub_contract = False
+            session.add(ticket)
