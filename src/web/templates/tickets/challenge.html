@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<table>
+    <tr>
+        <th>ФИО внедренца</th>
+        <th>Номер наряда из К7</th>
+        <th>Офис</th>
+        <th>Менеджер по наряду</th>
+        <th>Клиент</th>
+        <th>Задачи</th>
+        <th>Статус</th>
+    </tr>
+    {% for ticket in tickets%}
+    <tr>
+        <td class="text challenge">{{ ticket.additional_info.worker_fullname }}</td>
+        <td class="text challenge">{{ ticket.additional_info.k7_id }}</td>
+        <td class="text challenge">{{ ticket.additional_info.office }}</td>
+        <td class="text challenge">{{ ticket.additional_info.manager }}</td>
+        <td class="text challenge">{{ ticket.additional_info.client }}</td>
+        <td class="text challenge">{{ ticket.text }}</td>
+        <td class="text challenge">{{ ticket.last_status.text }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

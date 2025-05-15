@@ -1,0 +1,40 @@
+from fastapi import APIRouter, Request
+from database import Database
+from sqlalchemy import select
+from database.models import Ticket
+from ..templates import ticket_templates
+
+
+ticket_router = APIRouter(prefix='/tickets')
+
+
+@ticket_router.get("/")
+async def tickets(request: Request):
+    async with Database.make_session() as session:
+        query = select(Ticket).where(Ticket.deleted == False)
+
+        result = await session.execute(query)
+        tickets = result.scalars().all()
+
+        return ticket_templates.TemplateResponse('index.html', {"request": request, "tickets": tickets})
+    
+@ticket_router.get("/all")
+async def tickets_all(request: Request):
+    async with Database.make_session() as session:
+        query = select(Ticket)
+
+        result = await session.execute(query)
+        tickets = result.scalars().all()
+
+        return ticket_templates.TemplateResponse('index.html', {"request": request, "tickets": tickets})
+
+
+@ticket_router.get("/challenge")
+async def challenge(request: Request):
+    async with Database.make_session() as session:
+        query = select(Ticket).where(Ticket.additional_info != None)
+
+        result = await session.execute(query)
+        tickets = result.scalars().all()
+
+        return ticket_templates.TemplateResponse('challenge.html', {"request": request, "tickets": tickets})
