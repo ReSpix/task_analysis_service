@@ -12,11 +12,15 @@ from config_manager import SUB_PROJECT_GID
 scheduler = AsyncIOScheduler()
 update_interval = 5
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
+from asana.events import EventsApi
 
+sub_events_api = EventsApi(events_api._client)
 
 async def request_events():
     events = await events_api.get_events()
+    sub_events = await sub_events_api.get_events(SUB_PROJECT_GID)
     await handle_events(events)
+    await handle_events(sub_events)
 
 
 def activate_scheduler():
@@ -140,3 +144,13 @@ async def on_tag_add(event: Event):
         res = await task_api.remove_from_project(ticket_gid, task_api._client.main_project_gid)
         logging.info(
             f"Задача {ticket_gid} удалена из проекта в проект {task_api._client.main_project_gid}")
+        
+        async with Database.make_session() as session:
+            ticket = await Ticket.get_by_gid(session, ticket_gid)
+            if ticket is None:
+                logging.warning(f"Поставлен тег на неизвестную задачу gid={ticket_gid}")
+                return
+            ticket.sub_contract = True
+            session.add(ticket)
+            status = Status(text='Суб подряд', ticket=ticket)
+            session.add(status)

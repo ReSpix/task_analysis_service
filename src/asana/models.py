@@ -69,3 +69,10 @@ class Event(BaseModel):
             and self.resource.type == 'task' \
             and self.parent is not None \
             and self.parent.type == 'tag'
+    
+    def is_removed_from_project(self) -> bool:
+        return \
+        self.action == ActionType.REMOVED \
+        and self.resource.type == 'task' \
+        and self.parent is not None \
+        and self.parent.type == 'project'

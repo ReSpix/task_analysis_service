@@ -11,7 +11,7 @@ ticket_router = APIRouter(prefix='/tickets')
 @ticket_router.get("/")
 async def tickets(request: Request):
     async with Database.make_session() as session:
-        query = select(Ticket).where(Ticket.deleted == False)
+        query = select(Ticket).where((Ticket.deleted == False) & (Ticket.sub_contract == False))
 
         result = await session.execute(query)
         tickets = result.scalars().all()
@@ -38,3 +38,15 @@ async def challenge(request: Request):
         tickets = result.scalars().all()
 
         return ticket_templates.TemplateResponse('challenge.html', {"request": request, "tickets": tickets})
+    
+
+
+@ticket_router.get("/sub_contract")
+async def sub_contract(request: Request):
+    async with Database.make_session() as session:
+        query = select(Ticket).where(Ticket.sub_contract == True)
+
+        result = await session.execute(query)
+        tickets = result.scalars().all()
+
+        return ticket_templates.TemplateResponse('sub_contract.html', {"request": request, "tickets": tickets})

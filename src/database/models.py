@@ -22,6 +22,7 @@ class Ticket(Base):
     text: Mapped[str]
     completed: Mapped[bool] = mapped_column(default=False)
     deleted: Mapped[bool] = mapped_column(default=False)
+    sub_contract: Mapped[bool] = mapped_column(default=False)
     additional_info: Mapped[Optional["AdditionalTicketInfo"]] = relationship(
         back_populates="ticket", uselist=False, lazy='selectin')
     statuses: Mapped[List["Status"]] = relationship(
