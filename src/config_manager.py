@@ -7,6 +7,7 @@ import logging
 # TODO: переделать для получения из БД
 TOKEN: str = os.getenv("TOKEN")  # type: ignore
 MAIN_PROJECT_GID: str = os.getenv("MAIN_PROJECT_GID")  # type: ignore
+SUB_PROJECT_GID: str = os.getenv("SUB_PROJECT_GID") # type: ignore
 
 _sync_token_key = 'sync_token'
 

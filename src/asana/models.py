@@ -62,3 +62,10 @@ class Event(BaseModel):
         return \
             self.action == ActionType.UNDELETED \
             and self.resource.type == 'task'
+    
+    def is_tag_add(self) -> bool:
+        return \
+            self.action == ActionType.ADDED \
+            and self.resource.type == 'task' \
+            and self.parent is not None \
+            and self.parent.type == 'tag'

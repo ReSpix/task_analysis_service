@@ -26,3 +26,19 @@ class TaskApi:
 
         res = await self._client.get(url)
         return res['data']
+
+    async def add_to_project(self, task_gid: str, project_gid: str):
+        url = f'tasks/{task_gid}/addProject'
+
+        body = {'data': {'project': project_gid}}
+
+        res = await self._client.post(url, body)
+        return res
+
+    async def remove_from_project(self, task_gid: str, project_gid: str):
+        url = f'tasks/{task_gid}/removeProject'
+
+        body = {'data': {'project': project_gid}}
+
+        res = await self._client.post(url, body)
+        return res

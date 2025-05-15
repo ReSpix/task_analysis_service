@@ -7,6 +7,7 @@ from database import Database
 import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from asana import events_api, task_api
+from config_manager import SUB_PROJECT_GID
 
 scheduler = AsyncIOScheduler()
 update_interval = 5
@@ -41,6 +42,8 @@ async def handle_events(events: List[Event]):
             await on_task_delete(e)
         elif e.is_undeleted_task():
             await on_task_undelete(e)
+        elif e.is_tag_add():
+            await on_tag_add(e)
 
 
 async def on_section_moved(event: Event):
@@ -116,3 +119,24 @@ async def on_task_undelete(event: Event):
             return
         ticket.deleted = False
         session.add(ticket)
+
+
+async def on_tag_add(event: Event):
+    assert event.parent is not None
+    assert event.parent.name is not None
+    if 'суб' in event.parent.name.lower() and 'подряд' in event.parent.name.lower():
+        ticket_gid = event.resource.gid
+
+        res = await task_api.add_to_project(ticket_gid, SUB_PROJECT_GID)
+        assert isinstance(res, dict)
+
+        if 'data' not in res.keys():
+            logging.warning(f"Не удалось устновить задачу в проект {SUB_PROJECT_GID}")
+            return
+        
+        logging.info(
+            f"Задача {ticket_gid} установлена в проект {SUB_PROJECT_GID}")
+        
+        res = await task_api.remove_from_project(ticket_gid, task_api._client.main_project_gid)
+        logging.info(
+            f"Задача {ticket_gid} удалена из проекта в проект {task_api._client.main_project_gid}")
