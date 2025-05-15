@@ -44,7 +44,7 @@ async def challenge(request: Request):
 @ticket_router.get("/sub_contract")
 async def sub_contract(request: Request):
     async with Database.make_session() as session:
-        query = select(Ticket).where(Ticket.sub_contract == True)
+        query = select(Ticket).where((Ticket.sub_contract == True) & (Ticket.deleted == False))
 
         result = await session.execute(query)
         tickets = result.scalars().all()
