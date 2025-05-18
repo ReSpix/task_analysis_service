@@ -8,12 +8,30 @@ class AsanaApiError(Exception):
         self.body = body
         super().__init__(f"Asana API Error {status}: {body}")
 
+    def __str__(self):
+        return f"""
+Код: {self.status}
+Описание: {self.body}
+"""
+
 
 class AsanaClient:
+    base_url = "https://app.asana.com/api/1.0/"
+
+    @classmethod
+    async def check_token(cls, url, token, params={}):
+        async with aiohttp.ClientSession() as session:
+            headers = {"authorization": f"Bearer {token}"}
+            async with session.get(cls.base_url + url, headers=headers, params=params) as response:
+                data = await response.json()
+                if response.status != 200:
+                    raise AsanaApiError(response.status, data)
+                return data
+
     def __init__(self, token: str, main_project_gid: str):
         self.token = token
         self.main_project_gid = main_project_gid
-        self.base_url = "https://app.asana.com/api/1.0/"
+        self.base_url = self.__class__.base_url
 
     async def get(self, url, params={}):
         async with aiohttp.ClientSession() as session:

@@ -3,10 +3,12 @@ from database import Database
 from sqlalchemy import select
 from database.models import Ticket, Status
 from .tickets import ticket_router
+from .settings import settings_router
 
 
 web_router = APIRouter()
 web_router.include_router(ticket_router)
+web_router.include_router(settings_router)
 
 
 @web_router.get("/statuses")
