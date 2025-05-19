@@ -1,54 +1,15 @@
-<!DOCTYPE html>
-<html lang="ru">
+{% extends "base.html" %}
+{% block content %}
+<div class="w-full max-w-3xl p-6 bg-base-200 rounded-box shadow space-y-4">
+    <h1 class="text-2xl font-bold text-center">Настройка интеграции</h1>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Настройки</title>
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-
-</head>
-
-<body class="min-h-screen flex bg-base-100">
-    <aside class="w-64 bg-base-200 p-4">
-        <h2 class="text-xl font-bold mb-4">Меню</h2>
-        <ul class="menu bg-base-200 rounded-box w-56">
-            <li><a>Item 1</a></li>
-            <li>
-                <a>Parent</a>
-                <ul>
-                    <li><a>Submenu 1</a></li>
-                    <li><a>Submenu 2</a></li>
-                    <li>
-                        <a>Parent</a>
-                        <ul>
-                            <li><a>Submenu 1</a></li>
-                            <li><a>Submenu 2</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </li>
-            <li><a>Item 3</a></li>
-        </ul>
-    </aside>
-    <main class="flex-1 flex items-center justify-center">
-        <div class="w-full max-w-xl p-6 bg-base-200 rounded-box shadow space-y-4">
-            <h1 class="text-2xl font-bold text-center">Настройка интеграции</h1>
-
-            <form class="space-y-4" action="" method="post">
-                <fieldset class="fieldset">
-                    <legend class="fieldset-legend text-base">Токен Asana</legend>
-                    <input type="text" class="input w-full {{ data['type'] }}"
-                        value="{{ asana_token }}" name="asana_token" />
-                    <p class="label text-base wrap-break-word">{{ data['message'] }}</p>
-                </fieldset>
-                <button class="btn btn-primary">Сохранить</button>
-            </form>
-        </div>
-    </main>
-
-
-</body>
-
-</html>
+    <form class="space-y-4" action="" method="post">
+        <fieldset class="fieldset">
+            <legend class="fieldset-legend text-base">Токен Asana</legend>
+            <input type="text" class="input min-w-2xl {{ data['type'] }}" value="{{ asana_token }}" name="asana_token" />
+            <p class="label text-base wrap-break-word">{{ data['message'] }}</p>
+        </fieldset>
+        <button class="btn btn-primary">Сохранить</button>
+    </form>
+</div>
+{% endblock %}

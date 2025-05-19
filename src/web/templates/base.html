@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройки</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+</head>
+
+<body class="min-h-screen flex bg-base-100">
+    <aside class="w-64 bg-base-200 p-4">
+        <h2 class="text-xl font-bold mb-4">Меню</h2>
+        <ul class="menu bg-base-200 rounded-box w-56">
+            <li>
+                <a>Задачи</a>
+                <ul>
+                    <li><a href="/tickets">Активные</a></li>
+                    <li><a href="/tickets/all">Все</a></li>
+                    <li><a href="/tickets/challenge">Челленджи</a></li>
+                    <li><a href="/tickets/sub_contract">Субподряд</a></li>
+                </ul>
+            </li>
+            <li><a href="/settings">Настройки</a></li>
+        </ul>
+    </aside>
+    <main class="flex-1 flex items-center justify-center">
+        <div>
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+
+</body>
+
+</html>

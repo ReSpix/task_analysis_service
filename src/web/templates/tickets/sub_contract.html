@@ -1,15 +1,19 @@
 {% extends "base.html" %}
 {% block content %}
-<table>
-    <tr>
-        <th>Задача</th>
-        <th>Описание</th>
-    </tr>
-    {% for ticket in tickets%}
-    <tr>
-        <td class="text">{{ ticket.title }}</td>
-        <td class="text">{{ ticket.text }}</td>
-    </tr>
-    {% endfor %}
+<table class="table table-zebra">
+    <thead>
+        <tr>
+            <th>Задача</th>
+            <th>Описание</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for ticket in tickets%}
+        <tr>
+            <td class="text">{{ ticket.title }}</td>
+            <td class="text">{{ ticket.text }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
 </table>
 {% endblock %}

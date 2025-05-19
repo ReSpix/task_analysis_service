@@ -1,23 +1,28 @@
 {% extends "base.html" %}
 {% block content %}
-<table>
-    <tr>
-        <th>Задача</th>
-        <th>Описание</th>
-        <th>Статус</th>
-    </tr>
-    {% for ticket in tickets%}
-    <tr>
-        <td class="text">{{ ticket.title }}</td>
-        <td class="text">{{ ticket.text }}</td>
+<table class="table table-zebra">
+    <thead>
+        <tr>
+            <th>Задача</th>
+            <th>Описание</th>
+            <th>Статус</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for ticket in tickets%}
+        <tr>
+            <td class="text">{{ ticket.title }}</td>
+            <td class="text">{{ ticket.text }}</td>
 
-        {% if ticket.deleted %}
-        <td class="text">Удалено</td>
-        {% else %}
-        <td class="text">{{ ticket.last_status.text }}</td>
-        {% endif %}
+            {% if ticket.deleted %}
+            <td class="text">Удалено</td>
+            {% else %}
+            <td class="text">{{ ticket.last_status.text }}</td>
+            {% endif %}
 
-    </tr>
-    {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
 </table>
+
 {% endblock %}
