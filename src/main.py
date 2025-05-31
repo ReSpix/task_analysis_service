@@ -12,11 +12,13 @@ from core.receiver import receive_form
 from sqlalchemy import select
 import asyncio
 from web import web_router
+from starlette.middleware.sessions import SessionMiddleware
 
 logging.basicConfig(level=logging.INFO, stream=stdout,
                     format="%(asctime)s [%(levelname)s] %(message)s")
 
 app = FastAPI(lifespan=lifespan)
+app.add_middleware(SessionMiddleware, secret_key="v2np4vappy4n0cusununva")
 app.include_router(web_router)
 app.mount("/static", StaticFiles(directory="web/static"), name="static")
 
