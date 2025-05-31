@@ -3,7 +3,7 @@ from fastapi.responses import RedirectResponse
 from ..templates import settings_templates
 from config_manager import TOKEN
 from asana.client import AsanaClient, AsanaApiError
-from asana import asana_client
+from asana import asana_client, projects_api
 import logging
 from starlette.status import HTTP_303_SEE_OTHER
 
@@ -15,8 +15,9 @@ settings_router = APIRouter(prefix='/settings')
 async def submit(request: Request):
     asana_token = asana_client.get_token()
     data = request.session.pop("data", None)
+    projects = request.session.pop("projects", None)
 
-    return settings_templates.TemplateResponse("index.html", {"request": request, "asana_token": asana_token, "data": data})
+    return settings_templates.TemplateResponse("index.html", {"request": request, "asana_token": asana_token, "data": data, "projects": projects})
 
 
 @settings_router.post("/")
@@ -30,6 +31,8 @@ async def post_form(request: Request):
         data['success'] = res
         if res:
             data['message'] = f'Токен сохранен'
+            projects = await projects_api.get_projects()
+            request.session['projects'] = projects
         else:
             data['message'] = f'Неверный токен'
     except AsanaApiError as e:
