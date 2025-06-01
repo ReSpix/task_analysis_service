@@ -5,7 +5,7 @@ from asana.client import AsanaClient, AsanaApiError
 from asana import asana_client, ProjectsApi, try_create_apis
 import logging
 from starlette.status import HTTP_303_SEE_OTHER
-from config_manager import set
+from config_manager import set, get
 
 
 settings_router = APIRouter(prefix='/settings')
@@ -16,6 +16,19 @@ async def submit(request: Request):
     asana_token = asana_client.get_token()
     data = request.session.pop("data", None)
     projects = request.session.pop("projects", None)
+
+    if projects == None:
+        main_project_gid = await get("main_project_gid")
+        sub_project_gid = await get("sub_project_gid")
+
+        if main_project_gid is not None and sub_project_gid is not None:
+            if data == None:
+                data = {}
+            data['project_set'] = True
+            data['success'] = True
+            data['selected_main'] = main_project_gid
+            data['selected_sub'] = sub_project_gid
+            projects = await ProjectsApi(asana_client).get_projects()
 
     return settings_templates.TemplateResponse("index.html", {"request": request, "asana_token": asana_token, "data": data, "projects": projects})
 
@@ -55,6 +68,9 @@ async def post_form(request: Request):
             await set("sub_project_gid", sub_project)
             data['project_message_1'] = "Сохранено"
             data['project_message_2'] = "Сохранено"
+
+            data['selected_main'] = main_project
+            data['selected_sub'] = sub_project
             await try_create_apis()
 
     try:
