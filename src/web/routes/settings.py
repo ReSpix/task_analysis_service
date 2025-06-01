@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import RedirectResponse
-from ..templates import settings_templates
+from ..templates import settings_template
 from asana.client import AsanaClient, AsanaApiError
 from asana import asana_client, ProjectsApi, try_create_apis
 import logging
@@ -30,7 +30,7 @@ async def submit(request: Request):
             data['selected_sub'] = sub_project_gid
             projects = await ProjectsApi(asana_client).get_projects()
 
-    return settings_templates.TemplateResponse("index.html", {"request": request, "asana_token": asana_token, "data": data, "projects": projects})
+    return settings_template("index.html", {"request": request, "asana_token": asana_token, "data": data, "projects": projects})
 
 
 @settings_router.post("/")

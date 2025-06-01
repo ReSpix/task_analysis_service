@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request
 from database import Database
 from sqlalchemy import select
 from database.models import Ticket
-from ..templates import ticket_templates
+from ..templates import tickets_template
 
 
 ticket_router = APIRouter(prefix='/tickets')
@@ -16,7 +16,7 @@ async def tickets(request: Request):
         result = await session.execute(query)
         tickets = result.scalars().all()
 
-        return ticket_templates.TemplateResponse('index.html', {"request": request, "tickets": tickets})
+        return tickets_template('index.html', {"request": request, "tickets": tickets})
     
 @ticket_router.get("/all")
 async def tickets_all(request: Request):
@@ -26,7 +26,7 @@ async def tickets_all(request: Request):
         result = await session.execute(query)
         tickets = result.scalars().all()
 
-        return ticket_templates.TemplateResponse('index.html', {"request": request, "tickets": tickets})
+        return tickets_template('index.html', {"request": request, "tickets": tickets})
 
 
 @ticket_router.get("/challenge")
@@ -37,7 +37,7 @@ async def challenge(request: Request):
         result = await session.execute(query)
         tickets = result.scalars().all()
 
-        return ticket_templates.TemplateResponse('challenge.html', {"request": request, "tickets": tickets})
+        return tickets_template('challenge.html', {"request": request, "tickets": tickets})
     
 
 
@@ -49,4 +49,4 @@ async def sub_contract(request: Request):
         result = await session.execute(query)
         tickets = result.scalars().all()
 
-        return ticket_templates.TemplateResponse('sub_contract.html', {"request": request, "tickets": tickets})
+        return tickets_template('sub_contract.html', {"request": request, "tickets": tickets})
