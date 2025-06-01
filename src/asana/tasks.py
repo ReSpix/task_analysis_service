@@ -1,6 +1,5 @@
 from .client import AsanaClient
 from database.models import Ticket
-from config_manager import MAIN_PROJECT_GID
 from .client import asana_client
 import logging
 
@@ -14,7 +13,7 @@ class TaskApi:
 
         body = {'data': {'name': ticket.title,
                          "notes": ticket.text,
-                         "projects": [MAIN_PROJECT_GID]
+                         "projects": [asana_client.main_project_gid]
                          }}
 
         res = await self._client.post(url, body)

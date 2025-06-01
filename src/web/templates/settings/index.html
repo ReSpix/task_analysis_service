@@ -24,24 +24,38 @@
     <div class="mb-6">
         <label for="main_project" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Основной
             проект</label>
-        <select id="main_project"
+        <select id="main_project" name="main_project"
             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-            <option selected>Выберите</option>
+            <option selected>Выберите...</option>
             {% for project in projects %}
             <option value="{{ project['gid']}}">{{ project['name']}}</option>
             {% endfor %}
         </select>
+        {% if data['project_set'] %}
+        {% if data['project_success'] %}
+        <p class="mt-2 text-sm text-green-600 dark:text-green-500">{{ data['project_message_1'] }}</p>
+        {% else %}
+        <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ data['project_message_1'] }}</p>
+        {% endif %}
+        {% endif %}
     </div>
     <div class="mb-6">
         <label for="sub_project" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Проект
             субподряда</label>
-        <select id="sub_project"
+        <select id="sub_project" name="sub_project"
             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-            <option selected>Выберите</option>
+            <option selected>Выберите...</option>
             {% for project in projects %}
             <option value="{{ project['gid']}}">{{ project['name']}}</option>
             {% endfor %}
         </select>
+        {% if data['project_set'] %}
+        {% if data['project_success'] %}
+        <p class="mt-2 text-sm text-green-600 dark:text-green-500">{{ data['project_message_2'] }}</p>
+        {% else %}
+        <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ data['project_message_2'] }}</p>
+        {% endif %}
+        {% endif %}
     </div>
     {% endif %}
     {% else %}

@@ -4,21 +4,28 @@ from ..models import Event
 from ..client import AsanaClient, AsanaApiError
 from .events_parser import parse_events, clear_events
 import logging
-from config_manager import get_sync_token, save_sync_token
+from config_manager import get, set
 
 
 class EventsApi:
-    def __init__(self, client: AsanaClient):
+    def __init__(self, client: AsanaClient, resource: str):
         self._client: AsanaClient = client
         self.sync: str = ""
+        self.resource = resource
 
-    async def get_events(self, resource: str = "") -> List[Event]:
+    def _get_sync_key(self) -> str:
+        return self.resource + "_sync"
+
+    def get_resource(self) -> str:
+        return self.resource
+
+    async def get_events(self) -> List[Event]:
         if self.sync == "":
-            self.sync = await get_sync_token()
-        if resource == "":
-            resource = self._client.main_project_gid
+            sync = await get(self._get_sync_key())
+            if sync is not None:
+                self.sync = sync
 
-        params = {'sync': self.sync, "resource": resource}
+        params = {'sync': self.sync, "resource": self.resource}
         url = f"events"
         try:
             data = await self._client.get(url, params)
@@ -36,6 +43,6 @@ class EventsApi:
 
     async def _update_sync_token(self, source: dict):
         if 'sync' not in source:
-            raise ValueError("Update_sync_token source mush have 'sync' key")
+            raise ValueError("Update_sync_token source must have 'sync' key")
         self.sync = source['sync']
-        await save_sync_token(self.sync)
+        await set(self._get_sync_key(), self.sync)

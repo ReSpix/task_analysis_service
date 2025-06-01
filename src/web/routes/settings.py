@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import RedirectResponse
 from ..templates import settings_templates
-from config_manager import TOKEN
 from asana.client import AsanaClient, AsanaApiError
-from asana import asana_client, projects_api
+from asana import asana_client, ProjectsApi, try_create_apis
 import logging
 from starlette.status import HTTP_303_SEE_OTHER
+from config_manager import set
 
 
 settings_router = APIRouter(prefix='/settings')
@@ -26,12 +26,43 @@ async def post_form(request: Request):
     form = await request.form()
     asana_token = form.get("asana_token")
 
+
+    main_project = form.get("main_project")
+    sub_project = form.get("sub_project")
+
+
+    if main_project is not None and sub_project is not None:
+        assert isinstance(main_project, str)
+        assert isinstance(sub_project, str)
+        data['project_set'] = True
+
+        main_res = await ProjectsApi(asana_client).is_project(main_project)
+        sub_res = await ProjectsApi(asana_client).is_project(sub_project)
+
+        if main_project == sub_project:
+            data['project_message_1'] = "Выберите разные проекты"
+            data['project_message_2'] = "Выберите разные проекты"
+
+        if not main_res:
+            data['project_message_1'] = "Выберите проект"
+
+        if not sub_res:
+            data['project_message_2'] = "Выберите проект"
+
+        if main_res and sub_res:
+            data['project_success'] = True
+            await set("main_project_gid", main_project)
+            await set("sub_project_gid", sub_project)
+            data['project_message_1'] = "Сохранено"
+            data['project_message_2'] = "Сохранено"
+            await try_create_apis()
+
     try:
         res = await asana_client.set_token(asana_token)
         data['success'] = res
         if res:
             data['message'] = f'Токен сохранен'
-            projects = await projects_api.get_projects()
+            projects = await ProjectsApi(asana_client).get_projects()
             request.session['projects'] = projects
         else:
             data['message'] = f'Неверный токен'

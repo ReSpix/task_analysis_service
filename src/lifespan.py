@@ -5,6 +5,7 @@ from fastapi import FastAPI
 import logging
 from database import Database
 from core.events_handler import activate_scheduler
+from asana import try_create_apis
 
 
 @asynccontextmanager
@@ -29,6 +30,8 @@ def status_message(text: str):
 async def startup():
     await Database.create_all()
     activate_scheduler()
+    await try_create_apis()
+
 
 
 @status_message("выключение")

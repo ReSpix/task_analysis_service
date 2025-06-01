@@ -7,20 +7,36 @@ from database.models import Ticket, Status
 from database import Database
 import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from asana import events_api, task_api
-from config_manager import SUB_PROJECT_GID
+from asana import get_task_api, asana_client
+from config_manager import get
 from tgbot import TgBot
 
 scheduler = AsyncIOScheduler()
 update_interval = 5
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
 
-sub_events_api = EventsApi(events_api._client)
+events_api = None
+sub_events_api = None
 
 
 async def request_events():
+    global events_api
+    global sub_events_api
+
+    if events_api is None or sub_events_api is None:
+        main_project_gid = await get("main_project_gid")
+        sub_project_gid = await get("sub_project_gid")
+
+        logging.info(f"{main_project_gid} {sub_project_gid}")
+
+        if main_project_gid is not None and sub_project_gid is not None:
+            events_api = EventsApi(asana_client, main_project_gid)
+            sub_events_api = EventsApi(asana_client, sub_project_gid)
+        else:
+            return
+
     events = await events_api.get_events()
-    sub_events = await sub_events_api.get_events(SUB_PROJECT_GID)
+    sub_events = await sub_events_api.get_events()
     await handle_events(events)
     await handle_events(sub_events)
 
@@ -73,7 +89,9 @@ async def on_new_task_added(event: Event):
 
         if ticket is not None:
             return
-
+        
+        task_api = get_task_api()
+        assert task_api is not None
         try:
             ticket_data = await task_api.get_task(event.resource.gid)
         except AsanaApiError as e:
@@ -100,6 +118,8 @@ async def on_field_changed(event: Event):
                 f"Обновлено поле несущесвтующей задачи. gid={event.resource.gid}")
             return
 
+        task_api = get_task_api()
+        assert task_api is not None
         ticket_data = await task_api.get_task(event.resource.gid)
         ticket.title = ticket_data['name']
         ticket.text = ticket_data['notes']
@@ -136,16 +156,21 @@ async def on_tag_add(event: Event):
     if 'суб' in event.parent.name.lower() and 'подряд' in event.parent.name.lower():
         ticket_gid = event.resource.gid
 
-        res = await task_api.add_to_project(ticket_gid, SUB_PROJECT_GID)
+        assert sub_events_api is not None
+        sub_project_gid = sub_events_api.get_resource()
+        
+        task_api = get_task_api()
+        assert task_api is not None
+        res = await task_api.add_to_project(ticket_gid, sub_project_gid)
         assert isinstance(res, dict)
 
         if 'data' not in res.keys():
             logging.warning(
-                f"Не удалось устновить задачу в проект {SUB_PROJECT_GID}")
+                f"Не удалось устновить задачу в проект {sub_project_gid}")
             return
 
         logging.info(
-            f"Задача {ticket_gid} установлена в проект {SUB_PROJECT_GID}")
+            f"Задача {ticket_gid} установлена в проект {sub_project_gid}")
 
         res = await task_api.remove_from_project(ticket_gid, task_api._client.main_project_gid)
         logging.info(

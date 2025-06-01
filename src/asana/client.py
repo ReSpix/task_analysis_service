@@ -1,4 +1,6 @@
+import functools
 import logging
+from typing import Callable
 import aiohttp
 import config_manager
 
@@ -27,22 +29,28 @@ class AsanaClient:
                 if response.status != 200:
                     raise AsanaApiError(response.status, data)
                 return data
-            
+
     def get_token(self):
         return self.token
-    
+
     async def set_token(self, new_token) -> bool:
         try:
             await self._check_token(new_token)
+            self.token = new_token
+            await config_manager.set("token", new_token)
             return True
         except AsanaApiError as e:
             if e.status == 401:
-                logging.info("Введен неверный токен, отмена сохранения нового токена")
+                logging.info(
+                    "Введен неверный токен, отмена сохранения нового токена")
                 return False
             else:
                 raise
 
-    def __init__(self, token: str, main_project_gid: str):
+    def set_main_project_gid(self, gid: str) -> None:
+        self.main_project_gid = gid
+
+    def __init__(self, token: str = "", main_project_gid: str = ""):
         self.token = token
         self.main_project_gid = main_project_gid
         self.base_url = self.__class__.base_url
@@ -68,5 +76,27 @@ class AsanaClient:
         return data
 
 
-asana_client = AsanaClient(
-    config_manager.TOKEN, config_manager.MAIN_PROJECT_GID)
+asana_client = AsanaClient()
+
+
+async def try_init():
+    global asana_client
+
+    token = await config_manager.get("token")
+    main_project_gid = await config_manager.get("main_project_gid")
+
+    if token is None:
+        logging.info(
+            "Не удалось инициализировать API клиент Asana - отсутствует токен")
+        return False
+
+    await asana_client.set_token(token)
+
+    if main_project_gid is None:
+        logging.info(
+            "API клиент Asana инициализирован частично - отсутствует GID основного проекта")
+        return False
+
+    asana_client.set_main_project_gid(main_project_gid)
+    logging.info("API клиент Asana успешно инициализирован")
+    return True

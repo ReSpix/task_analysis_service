@@ -8,8 +8,8 @@ services:
       - ./src:/app # DEV
       # - database:/app/database # PROD
     restart: always
-    env_file:
-      - .env
+    # env_file:
+      # - .env
     command: --reload
 
   ssh-tunnel:

@@ -1,7 +1,7 @@
 from database import Database
 from database.models import Ticket, Status
 import logging
-from asana import task_api
+from asana import get_task_api
 import asyncio
 from tgbot import TgBot
 
@@ -11,6 +11,8 @@ async def receive_form(data: dict):
         ticket = Ticket.full_ticket_from_dict(data)
         session.add(ticket)
 
+        task_api = get_task_api()
+        assert task_api is not None
         publish_data = await task_api.publish_task(ticket)
         ticket.gid = publish_data['gid']
 
