@@ -50,3 +50,13 @@ async def sub_contract(request: Request):
         tickets = result.scalars().all()
 
         return tickets_template('sub_contract.html', {"request": request, "tickets": tickets})
+
+@ticket_router.get("/full-info/{ticket_id}")
+async def full_ticket_info(request: Request, ticket_id: int):
+    async with Database.make_session() as session:
+        query = select(Ticket).where(Ticket.id == ticket_id)
+
+        result = await session.execute(query)
+        ticket = result.scalars().one_or_none()
+    
+    return tickets_template('full_info.html', {"request": request, "ticket": ticket})

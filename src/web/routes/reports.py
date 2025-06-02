@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request
 from web.templates import reports_template
 from database import Database
-from database.models import AdditionalTicketInfo
+from database.models import AdditionalTicketInfo, Ticket
 from sqlalchemy import select, distinct, and_
 from datetime import datetime, timedelta
 
@@ -22,10 +22,10 @@ async def manager_report(request: Request, manager: str = "", date_start: str = 
         datetime_end = datetime.strptime(date_end, "%Y-%m-%d")
 
         async with Database.make_session() as session:
-            query = select(AdditionalTicketInfo).where(
+            query = select(AdditionalTicketInfo).join(AdditionalTicketInfo.ticket).where(
                 and_(
-                    AdditionalTicketInfo.created_at >= datetime_start,
-                    AdditionalTicketInfo.created_at < datetime_end  + timedelta(days=1),
+                    Ticket.created_at >= datetime_start,
+                    Ticket.created_at < datetime_end  + timedelta(days=1),
                     AdditionalTicketInfo.worker_fullname == manager
                 )
             )

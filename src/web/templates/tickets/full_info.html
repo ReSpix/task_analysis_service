@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title%}{{ ticket.title }}{% endblock %}
+
+{% block content %}
+
+<div class="md:max-w-2xl w-full bg-white shadow-lg rounded-lg p-8">
+    <h2 class="text-3xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+        {{ ticket.title }}
+    </h2>
+
+    <div class="space-y-4">
+
+
+        <!-- Text -->
+        <div class="border p-4 rounded bg-gray-50">
+            <p class="text-gray-900 leading-relaxed whitespace-pre-line">{{ ticket.text }}</p>
+        </div>
+
+        <!-- Title -->
+        {# <div class="flex justify-between border-b pb-2">
+            <span class="text-gray-500 font-medium">Получен: </span>
+            <span class="text-gray-900 font-semibold">{{ ticket.created_at }}</span>
+        </div> #}
+
+        <!-- Flags -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
+            <!-- Completed -->
+            {# <div class="flex items-center gap-2">
+                <span class="text-sm text-gray-600">Completed:</span>
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-sm font-semibold"
+                    :class="ticket.completed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                    {{ 'Yes' if ticket.completed else 'No' }}
+                </span>
+            </div>
+
+            <!-- Deleted -->
+            <div class="flex items-center gap-2">
+                <span class="text-sm text-gray-600">Deleted:</span>
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-sm font-semibold"
+                    :class="ticket.deleted ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'">
+                    {{ 'Yes' if ticket.deleted else 'No' }}
+                </span>
+            </div>
+
+            <!-- Sub-contract -->
+            <div class="flex items-center gap-2">
+                <span class="text-sm text-gray-600">Sub-contract:</span>
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-sm font-semibold"
+                    :class="ticket.sub_contract ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'">
+                    {{ 'Yes' if ticket.sub_contract else 'No' }}
+                </span>
+            </div> #}
+        </div>
+    </div>
+
+    <!-- Footer Buttons -->
+    <div class="mt-8 flex justify-end gap-3">
+        <button type="button"
+            class="text-center inline-flex items-center text-red-700 hover:text-white border border-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-900">
+            <svg class="w-6 h-6 mr-2 dark:text-gray-800 text-red" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                width="24" height="24" fill="none" viewBox="0 0 24 24">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z" />
+            </svg>
+            Удалить
+        </button>
+
+    </div>
+</div>
+
+{% endblock %}

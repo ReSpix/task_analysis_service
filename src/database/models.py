@@ -23,6 +23,7 @@ class Ticket(Base):
     completed: Mapped[bool] = mapped_column(default=False)
     deleted: Mapped[bool] = mapped_column(default=False)
     sub_contract: Mapped[bool] = mapped_column(default=False)
+    created_at: Mapped[datetime] = mapped_column(default=datetime.now)
     additional_info: Mapped[Optional["AdditionalTicketInfo"]] = relationship(
         back_populates="ticket", uselist=False, lazy='selectin')
     statuses: Mapped[List["Status"]] = relationship(
@@ -86,7 +87,6 @@ class AdditionalTicketInfo(Base):
     office: Mapped[str]
     manager: Mapped[Optional[str]]
     client: Mapped[str]
-    created_at: Mapped[datetime] = mapped_column(default=datetime.now)
 
     ticket_id: Mapped["Ticket"] = mapped_column(
         ForeignKey("tickets.id"), unique=True, nullable=False)
