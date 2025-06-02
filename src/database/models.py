@@ -86,10 +86,11 @@ class AdditionalTicketInfo(Base):
     office: Mapped[str]
     manager: Mapped[Optional[str]]
     client: Mapped[str]
+    created_at: Mapped[datetime] = mapped_column(default=datetime.now)
 
     ticket_id: Mapped["Ticket"] = mapped_column(
         ForeignKey("tickets.id"), unique=True, nullable=False)
-    ticket: Mapped["Ticket"] = relationship(back_populates="additional_info")
+    ticket: Mapped["Ticket"] = relationship(back_populates="additional_info", lazy='selectin')
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]):
