@@ -7,4 +7,4 @@ reports_router = APIRouter(prefix='/reports')
 
 @reports_router.get("/manager")
 async def manager_report(request: Request):
-    return reports_template("index.html", {"request": request})
+    return reports_template("index.html", {"request": request, "managers": ['1', '2', '3']})
