@@ -1,19 +1,37 @@
 {% extends "base.html" %}
+{% block title %} Субподряды {% endblock %}
 {% block content %}
-<table class="table table-zebra">
-    <thead>
-        <tr>
-            <th>Задача</th>
-            <th>Описание</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for ticket in tickets%}
-        <tr>
-            <td class="text">{{ ticket.title }}</td>
-            <td class="text">{{ ticket.text }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<h2 class="text-3xl font-extrabold dark:text-white my-8">Субподряды</h2>
+
+{% if tickets|length > 0%}
+
+<div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+    <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+            <tr>
+                <th scope="col" class="px-6 py-3">
+                    Заголовок
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    Задачи
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ticket in tickets%}
+            <tr
+                class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200">
+                <td class="px-6 py-4">{{ ticket.title }}</td>
+                <td class="px-6 py-4">{{ ticket.text }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% else %}
+
+<h3 class="text-base font-normal dark:text-white my-8">Нет субподрядов</h3>
+
+{%endif%}
 {% endblock %}

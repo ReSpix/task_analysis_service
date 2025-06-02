@@ -16,7 +16,7 @@ async def tickets(request: Request):
         result = await session.execute(query)
         tickets = result.scalars().all()
 
-        return tickets_template('index.html', {"request": request, "tickets": tickets})
+        return tickets_template('index.html', {"request": request, "tickets": tickets, "all": False})
     
 @ticket_router.get("/all")
 async def tickets_all(request: Request):
@@ -26,7 +26,7 @@ async def tickets_all(request: Request):
         result = await session.execute(query)
         tickets = result.scalars().all()
 
-        return tickets_template('index.html', {"request": request, "tickets": tickets})
+        return tickets_template('index.html', {"request": request, "tickets": tickets, "all": True})
 
 
 @ticket_router.get("/challenge")
