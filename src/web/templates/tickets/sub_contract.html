@@ -9,6 +9,7 @@
     <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
             <tr>
+                <th scope="col" class="px-2 py-3 w-4"></th>
                 <th scope="col" class="px-6 py-3">
                     Заголовок
                 </th>
@@ -21,6 +22,17 @@
             {% for ticket in tickets%}
             <tr
                 class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200">
+                <td class="px-2 py-4 w-4">
+                    <a href="/tickets/full-info/{{ ticket.id }}">
+                        <svg class="w-6 h-6 text-gray-300 dark:text-white" aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M18 14v4.833A1.166 1.166 0 0 1 16.833 20H5.167A1.167 1.167 0 0 1 4 18.833V7.167A1.166 1.166 0 0 1 5.167 6h4.618m4.447-2H20v5.768m-7.889 2.121 7.778-7.778" />
+                        </svg>
+
+                    </a>
+
+                </td>
                 <td class="px-6 py-4">{{ ticket.title }}</td>
                 <td class="px-6 py-4 whitespace-pre-line">{{ ticket.text }}</td>
             </tr>
