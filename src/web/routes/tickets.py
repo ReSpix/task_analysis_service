@@ -68,13 +68,11 @@ async def full_ticket_info(request: Request, ticket_id: int):
     if ticket is not None:
         ticket.statuses.sort(key=lambda x: x.datetime)
         for i in range(len(ticket.statuses) - 1):
-            ticket.statuses[i].time_to_next = ticket.statuses[i +
+            ticket.statuses[i].time_to_next = ticket.statuses[i + 
                                                               1].datetime - ticket.statuses[i].datetime
 
         ticket.statuses[-1].time_to_next = datetime.now() - ticket.statuses[-1].datetime
         ticket.statuses.sort(key=lambda x: x.datetime, reverse=True)
-        for status in ticket.statuses:
-            status.time_to_next = format_timedelta_pretty(status.time_to_next)
 
     return tickets_template('full_info.html', {"request": request, "ticket": ticket})
 
@@ -92,7 +90,7 @@ async def delete_ticket(request: Request, ticket_id: int):
             ticket.deleted_at = datetime.now()
             ticket.deleted = True
             session.add(ticket)
-            status = Status(text='Удалено', ticket=ticket)
+            status = Status(text='Удалено вручную', ticket=ticket)
             session.add(status)
 
     return RedirectResponse(ticket_router.prefix+f"/full-info/{ticket_id}", status_code=HTTP_303_SEE_OTHER)

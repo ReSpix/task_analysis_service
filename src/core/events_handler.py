@@ -140,6 +140,9 @@ async def on_task_delete(event: Event):
         ticket.deleted_at = datetime.now()
         session.add(ticket)
 
+        status = Status(text='Удалено', ticket=ticket)
+        session.add(status)
+
 
 async def on_task_undelete(event: Event):
     async with Database.make_session() as session:
@@ -150,6 +153,9 @@ async def on_task_undelete(event: Event):
             return
         ticket.deleted = False
         session.add(ticket)
+
+        status = Status(text="Удаление отменено", ticket=ticket)
+        session.add(status)
 
 
 async def on_tag_add(event: Event):
@@ -168,7 +174,7 @@ async def on_tag_add(event: Event):
 
         if 'data' not in res.keys():
             logging.warning(
-                f"Не удалось устновить задачу в проект {sub_project_gid}")
+                f"Не удалось установить задачу в проект {sub_project_gid}")
             return
 
         logging.info(
@@ -186,8 +192,8 @@ async def on_tag_add(event: Event):
                 return
             ticket.sub_contract = True
             session.add(ticket)
-            status = Status(text='Суб подряд', ticket=ticket)
-            session.add(status)
+            # status = Status(text='Перемещено в субподряд', ticket=ticket)
+            # session.add(status)
 
 
 async def on_tag_remove(event: Event):

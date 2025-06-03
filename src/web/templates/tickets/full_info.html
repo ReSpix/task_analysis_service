@@ -62,7 +62,7 @@
                 {% else %}
                 Был этом статусе
                 {% endif %}
-                {{ status.time_to_next }}
+                {{ status.time_to_next|timedelta_human }}
 
             </time>
             <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ status.text }}</h3>

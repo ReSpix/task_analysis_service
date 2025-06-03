@@ -1,4 +1,5 @@
 from datetime import timedelta
+from typing import Optional
 
 
 def plural_ru(n, one, few, many):
@@ -12,11 +13,14 @@ def plural_ru(n, one, few, many):
         return many
 
 
-def format_timedelta_pretty(delta: timedelta) -> str:
+def format_timedelta_pretty(delta: Optional[timedelta]) -> str:
+    if delta is None:
+        return ""
+
     total_seconds = int(delta.total_seconds())
 
     if total_seconds < 60:
-        return f"{total_seconds} " + plural_ru(total_seconds, "секунда", "секунды", "секунд")
+        return f"{total_seconds} " + plural_ru(total_seconds, "секунду", "секунды", "секунд")
 
     total_minutes = total_seconds // 60
     days = total_minutes // (24 * 60)
@@ -31,6 +35,6 @@ def format_timedelta_pretty(delta: timedelta) -> str:
         parts.append(f"{hours} " + plural_ru(hours, "час", "часа", "часов"))
     if minutes > 0 or (days == 0 and hours == 0):
         parts.append(f"{minutes} " + plural_ru(minutes,
-                     "минута", "минуты", "минут"))
+                     "минуту", "минуты", "минут"))
 
     return " ".join(parts)

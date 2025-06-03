@@ -5,7 +5,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy import select, desc
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -114,6 +114,9 @@ class Status(Base):
     datetime: Mapped[datetime] = mapped_column(default=datetime.now)    
     ticket_id: Mapped["Ticket"] = mapped_column(ForeignKey("tickets.id"))
     ticket: Mapped["Ticket"] = relationship(back_populates="statuses")
+
+    __allow_unmapped__ = True
+    time_to_next: Optional[timedelta] = None
 
 
 class Config(Base):
