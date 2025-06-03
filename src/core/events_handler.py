@@ -1,3 +1,4 @@
+from datetime import datetime
 from asana.events import EventsApi
 from typing import List
 from sqlalchemy import select
@@ -136,6 +137,7 @@ async def on_task_delete(event: Event):
                 f"Удалена несущесвтующая задачи. gid={event.resource.gid}")
             return
         ticket.deleted = True
+        ticket.deleted_at = datetime.now()
         session.add(ticket)
 
 

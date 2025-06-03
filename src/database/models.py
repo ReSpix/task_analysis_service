@@ -24,6 +24,7 @@ class Ticket(Base):
     deleted: Mapped[bool] = mapped_column(default=False)
     sub_contract: Mapped[bool] = mapped_column(default=False)
     created_at: Mapped[datetime] = mapped_column(default=datetime.now)
+    deleted_at: Mapped[Optional[datetime]]
     additional_info: Mapped[Optional["AdditionalTicketInfo"]] = relationship(
         back_populates="ticket", uselist=False, lazy='selectin')
     statuses: Mapped[List["Status"]] = relationship(
