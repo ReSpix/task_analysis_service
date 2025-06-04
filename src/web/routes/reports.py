@@ -25,7 +25,11 @@ async def manager_report(request: Request, manager: str = "", date_start: str = 
         report = []
 
         async with Database.make_session() as session:
-            query = select(AdditionalTicketInfo).join(AdditionalTicketInfo.ticket).where(
+            query = select(
+                AdditionalTicketInfo
+            ).join(
+                AdditionalTicketInfo.ticket
+            ).where(
                 and_(
                     Ticket.created_at >= date_period.start,
                     Ticket.created_at < date_period.end + timedelta(days=1),
@@ -63,18 +67,20 @@ async def all_managers_report(request: Request, date_start: str = "", date_end: 
     period = extract_date_peroid(date_start, date_end)
     async with Database.make_session() as session:
         query = select(
-            AdditionalTicketInfo.worker_fullname, 
-            func.count(), 
+            AdditionalTicketInfo.worker_fullname,
+            func.count(),
             func.count(case((not_(Ticket.deleted), 1))),
             func.count(case((Ticket.deleted, 1))),
-        )\
-        .join(AdditionalTicketInfo.ticket)\
-        .where(and_(
-            Ticket.created_at >= period.start,
-            Ticket.created_at < period.end + timedelta(days=1)
-        ))\
-        .group_by(
+        ).join(
+            AdditionalTicketInfo.ticket
+        ).where(
+            and_(
+                Ticket.created_at >= period.start,
+                Ticket.created_at < period.end + timedelta(days=1)
+            )
+        ).group_by(
             AdditionalTicketInfo.worker_fullname)
+
         res = await session.execute(query)
         info = res.all()
 
