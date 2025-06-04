@@ -56,7 +56,7 @@
         </div>
     </div>
     <script>
-        
+
         const form = document.getElementById('form');
         const el1 = document.getElementById('save_btn');
         const el2 = document.getElementById('loading_btn');
@@ -77,6 +77,7 @@
     </script>
 </form>
 
+{% if report is not none %}
 {% if report|length > 0 %}
 <div class="relative overflow-x-auto shadow-md sm:rounded-lg mt-6">
     <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
@@ -134,6 +135,11 @@
         </tbody>
     </table>
 </div>
+{% else %}
+
+<h3 class="text-base font-normal dark:text-white my-8">Нет принеcенных нарядов</h3>
+
+{% endif %}
 {% endif %}
 
 {% endblock %}
