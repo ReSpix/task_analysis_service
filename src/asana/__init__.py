@@ -20,10 +20,13 @@ def get_task_api() -> Optional[TaskApi]:
 def get_projects_api() -> Optional[ProjectsApi]:
     return _projects_api
 
+initialized = False
+
 async def try_create_apis():
     global asana_client
     global _task_api
     global _projects_api
+    global initialized
 
     init_res = await try_init()
 
@@ -33,3 +36,4 @@ async def try_create_apis():
     _task_api = TaskApi(asana_client)
     _projects_api = ProjectsApi(asana_client)
     logging.info("Дополнительные части API Asana успешно инициализированы")
+    initialized = True
