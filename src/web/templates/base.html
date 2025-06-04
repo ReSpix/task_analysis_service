@@ -89,7 +89,8 @@
                     <ul id="dropdown-reports" class="py-2 space-y-2">
                         <li>
                             <a href="/reports/all-managers"
-                                class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Все принесенные
+                                class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Все
+                                принесенные
                                 наряды</a>
                         </li>
                         <li>
@@ -121,7 +122,8 @@
                     <ul id="dropdown-settings" class="py-2 space-y-2 hidden">
                         <li>
                             <a href="/settings"
-                                class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Интеграция Asana</a>
+                                class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Интеграция
+                                Asana</a>
                         </li>
                     </ul>
                 </li>
@@ -129,9 +131,10 @@
         </div>
     </aside>
     <!-- navbar-end -->
-    <div class="p-4 sm:ml-64">
+    <div class="p-4 sm:ml-64 scroll-hidden">
         {% block content %}{% endblock %}
     </div>
+    <div class="h-72 sm:hidden"></div>
     <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
 </body>
 
