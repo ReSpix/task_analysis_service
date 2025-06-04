@@ -1,5 +1,7 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Optional
+from dataclasses import dataclass
+from dateutil.relativedelta import relativedelta
 
 
 def plural_ru(n, one, few, many):
@@ -38,3 +40,15 @@ def format_timedelta_pretty(delta: Optional[timedelta]) -> str:
                      "минуту", "минуты", "минут"))
 
     return " ".join(parts)
+
+
+@dataclass
+class TimePeroid:
+    start: datetime
+    end: datetime
+
+
+def create_date_period() -> TimePeroid:
+    end = datetime.now()
+    start = end - relativedelta(months=1)
+    return TimePeroid(start=start, end=end)

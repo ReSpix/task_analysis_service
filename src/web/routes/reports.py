@@ -1,9 +1,11 @@
+import logging
 from fastapi import APIRouter, Request
 from web.templates import reports_template
 from database import Database
 from database.models import AdditionalTicketInfo, Ticket
-from sqlalchemy import select, distinct, and_
+from sqlalchemy import func, select, distinct, and_
 from datetime import datetime, timedelta
+from utils import create_date_period, TimePeroid
 
 
 reports_router = APIRouter(prefix='/reports')
@@ -16,26 +18,57 @@ async def manager_report(request: Request, manager: str = "", date_start: str = 
         res = await session.execute(query)
         managers = res.scalars().all()
 
+    date_period = extract_date_peroid(date_start, date_end)
+
     report = []
-    if manager != "" and date_start != "" and date_end != "":
-        datetime_start = datetime.strptime(date_start, "%Y-%m-%d")
-        datetime_end = datetime.strptime(date_end, "%Y-%m-%d")
+    if manager != "":
 
         async with Database.make_session() as session:
             query = select(AdditionalTicketInfo).join(AdditionalTicketInfo.ticket).where(
                 and_(
-                    Ticket.created_at >= datetime_start,
-                    Ticket.created_at < datetime_end  + timedelta(days=1),
+                    Ticket.created_at >= date_period.start,
+                    Ticket.created_at < date_period.end + timedelta(days=1),
                     AdditionalTicketInfo.worker_fullname == manager
                 )
             )
             res = await session.execute(query)
             report = res.scalars().all()
 
-    return reports_template("manager_report.html", 
-                            {"request": request, 
-                             "managers": managers, 
-                             "selected_manager": manager, 
-                             "date_start": date_start, 
-                             "date_end": date_end, 
+    return reports_template("manager_report.html",
+                            {"request": request,
+                             "managers": managers,
+                             "selected_manager": manager,
+                             "date_start": date_period.start.strftime("%Y-%m-%d"),
+                             "date_end": date_period.end.strftime("%Y-%m-%d"),
                              "report": report})
+
+
+def extract_date_peroid(date_start: str, date_end: str) -> TimePeroid:
+    period = create_date_period()
+
+    if date_start != "":
+        datetime_start = datetime.strptime(date_start, "%Y-%m-%d")
+        period.start = datetime_start
+
+    if date_end != "":
+        datetime_end = datetime.strptime(date_end, "%Y-%m-%d")
+        period.end = datetime_end
+
+    return period
+
+
+@reports_router.get("/all-managers")
+async def all_managers_report(request: Request, date_start: str = "", date_end: str = ""):
+    async with Database.make_session() as session:
+        query = select(AdditionalTicketInfo.worker_fullname, func.count()).group_by(
+            AdditionalTicketInfo.worker_fullname)
+        res = await session.execute(query)
+        info = res.all()
+
+    period = extract_date_peroid(date_start, date_end)
+
+    return reports_template("all_managers_report.html",
+                            {"request": request,
+                             "info": info,
+                             "date_start": period.start.strftime("%Y-%m-%d"),
+                             "date_end": period.end.strftime("%Y-%m-%d")})
