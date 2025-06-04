@@ -3,7 +3,7 @@ from fastapi import APIRouter, Request
 from web.templates import reports_template
 from database import Database
 from database.models import AdditionalTicketInfo, Ticket
-from sqlalchemy import func, not_, select, distinct, and_
+from sqlalchemy import case, func, not_, select, distinct, and_
 from datetime import datetime, timedelta
 from utils import create_date_period, TimePeroid
 
@@ -29,8 +29,7 @@ async def manager_report(request: Request, manager: str = "", date_start: str = 
                 and_(
                     Ticket.created_at >= date_period.start,
                     Ticket.created_at < date_period.end + timedelta(days=1),
-                    AdditionalTicketInfo.worker_fullname == manager,
-                    not_(Ticket.deleted)
+                    AdditionalTicketInfo.worker_fullname == manager
                 )
             )
             res = await session.execute(query)
@@ -63,15 +62,21 @@ def extract_date_peroid(date_start: str, date_end: str) -> TimePeroid:
 async def all_managers_report(request: Request, date_start: str = "", date_end: str = ""):
     period = extract_date_peroid(date_start, date_end)
     async with Database.make_session() as session:
-        query = select(AdditionalTicketInfo.worker_fullname, func.count()).join(AdditionalTicketInfo.ticket).where(and_(
+        query = select(
+            AdditionalTicketInfo.worker_fullname, 
+            func.count(), 
+            func.count(case((not_(Ticket.deleted), 1))),
+            func.count(case((Ticket.deleted, 1))),
+        )\
+        .join(AdditionalTicketInfo.ticket)\
+        .where(and_(
             Ticket.created_at >= period.start,
-            Ticket.created_at < period.end + timedelta(days=1),
-            not_(Ticket.deleted)
-        )).group_by(
+            Ticket.created_at < period.end + timedelta(days=1)
+        ))\
+        .group_by(
             AdditionalTicketInfo.worker_fullname)
         res = await session.execute(query)
         info = res.all()
-
 
     return reports_template("all_managers_report.html",
                             {"request": request,

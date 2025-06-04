@@ -76,7 +76,13 @@
                     ФИО внедренца
                 </th>
                 <th scope="col" class="px-6 py-3">
-                    Количество принесенных нарядов
+                    Всего принесено
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    Активны
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    Уже удалено
                 </th>
             </tr>
         </thead>
@@ -97,6 +103,8 @@
                 </td>
                 <td class="px-6 py-4">{{ row[0] }}</td>
                 <td class="px-6 py-4">{{ row[1] }}</td>
+                <td class="px-6 py-4">{{ row[2] }}</td>
+                <td class="px-6 py-4">{{ row[3] }}</td>
             </tr>
             {% endfor %}
         </tbody>
