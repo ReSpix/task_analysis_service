@@ -32,7 +32,7 @@ async def manager_report(request: Request, manager: str = "", date_start: str = 
             res = await session.execute(query)
             report = res.scalars().all()
 
-    return reports_template("index.html", 
+    return reports_template("manager_report.html", 
                             {"request": request, 
                              "managers": managers, 
                              "selected_manager": manager, 
