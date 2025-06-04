@@ -11,7 +11,7 @@
 
     <div class="space-y-4">
 
-        <div class="flex gap-6">
+        <div class="flex gap-6 mb-6">
             <!-- Completed -->
             {% if ticket.completed %}
             <span
@@ -29,6 +29,54 @@
             {% endif %}
 
         </div>
+
+        {% if ticket.additional_info != none %}
+        <form>
+            <div class="grid gap-6 mb-6 md:grid-cols-2 lg:grid-cols-3">
+                <div class="relative z-0 w-full mb-5 group">
+                    <input disabled value="{{ ticket.additional_info.worker_fullname }}" type="email" id="worker"
+                        class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
+                        placeholder=" " required />
+                    <label for="worker"
+                        class="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Внедренец</label>
+                </div>
+
+                <div class="relative z-0 w-full mb-5 group">
+                    <input disabled value="{{ ticket.additional_info.k7_id }}" type="email" id="k7_id"
+                        class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
+                        placeholder=" " required />
+                    <label for="k7_id"
+                        class="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Наряд
+                        K7</label>
+                </div>
+
+                <div class="relative z-0 w-full mb-5 group">
+                    <input disabled value="{{ ticket.additional_info.client }}" type="email" id="client"
+                        class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
+                        placeholder=" " required />
+                    <label for="client"
+                        class="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Клиент</label>
+                </div>
+
+                <div class="relative z-0 w-full mb-5 group">
+                    <input disabled value="{{ ticket.additional_info.manager }}" type="email" id="manager"
+                        class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
+                        placeholder=" " required />
+                    <label for="manager"
+                        class="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Менеджер
+                        по наряду</label>
+                </div>
+
+                <div class="relative z-0 w-full mb-5 group">
+                    <input disabled value="{{ ticket.additional_info.office }}" type="email" id="office"
+                        class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
+                        placeholder=" " required />
+                    <label for="office"
+                        class="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Офис</label>
+                </div>
+            </div>
+        </form>
+        {% endif %}
 
 
         <!-- Text -->
@@ -55,7 +103,7 @@
             <time class="mb-1 text-sm font-normal leading-none text-gray-500 dark:text-gray-500">
                 Установлен: {{ status.datetime.strftime('%H:%M %d.%m.%Y') }}
             </time>
-            <br/>
+            <br />
             <time class="mb-1 text-sm font-normal leading-none text-gray-500 dark:text-gray-500">
                 {% if loop.index0 == 0 %}
                 В этом статусе уже
@@ -116,8 +164,10 @@
                 <!-- Modal body -->
                 <div class="p-4 md:p-5 space-y-4">
                     <p class="text-base leading-relaxed text-gray-500 dark:text-gray-400">
-                        Задача будет помечена как удаленная. Она останется в базе и отчетах. В канбан-доске задача
-                        удалена не будет. Используйте это если задачу не нужно отслеживать или если по каким-то причинам
+                        Задача будет помечена как удаленная. Она останется в базе и отчетах. В канбан-доске
+                        задача
+                        удалена не будет. Используйте это если задачу не нужно отслеживать или если по каким-то
+                        причинам
                         она не была автоматически отмечена как удаленная при удалении.
                     </p>
                 </div>
