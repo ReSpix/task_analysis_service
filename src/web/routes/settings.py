@@ -30,7 +30,11 @@ async def submit(request: Request):
             data['selected_sub'] = sub_project_gid
             projects = await ProjectsApi(asana_client).get_projects()
 
-    return settings_template("index.html", {"request": request, "asana_token": asana_token, "data": data, "projects": projects})
+    return settings_template("asana_main.html", 
+                             {"request": request, 
+                              "asana_token": asana_token, 
+                              "data": data, 
+                              "projects": projects})
 
 
 @settings_router.post("/")
