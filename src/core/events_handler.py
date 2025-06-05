@@ -161,7 +161,10 @@ async def on_task_undelete(event: Event):
 async def on_tag_add(event: Event):
     assert event.parent is not None
     assert event.parent.name is not None
-    if 'суб' in event.parent.name.lower() and 'подряд' in event.parent.name.lower():
+
+    tag = await get("tag")
+    
+    if tag is not None and tag.lower() == event.parent.name.lower():
         ticket_gid = event.resource.gid
 
         assert sub_events_api is not None
@@ -199,7 +202,10 @@ async def on_tag_add(event: Event):
 async def on_tag_remove(event: Event):
     assert event.parent is not None
     assert event.parent.name is not None
-    if 'суб' in event.parent.name.lower() and 'подряд' in event.parent.name.lower():
+
+    tag = await get("tag")
+    
+    if tag is not None and tag.lower() == event.parent.name.lower():
         ticket_gid = event.resource.gid
 
         async with Database.make_session() as session:

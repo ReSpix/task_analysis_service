@@ -4,6 +4,7 @@ import logging
 from asana import get_task_api
 import asyncio
 from tgbot import TgBot
+from config_manager import get
 
 async def receive_form(data: dict):
     logging.info("Received ticket")
@@ -13,12 +14,16 @@ async def receive_form(data: dict):
 
         task_api = get_task_api()
         assert task_api is not None
-        publish_data = await task_api.publish_task(ticket)
+        section = await get("main_section")
+
+        publish_data = await task_api.publish_task(ticket, section)
         ticket.gid = publish_data['gid']
 
         section_text = publish_data['memberships'][0]['section']['name']
-        status = Status(text=section_text, ticket=ticket)
+        status_create = Status(text=f"Создано", ticket=ticket)
+        status_section = Status(text=section_text, ticket=ticket)
 
-        session.add(status)
+        session.add(status_create)
+        session.add(status_section)
         session.add(ticket)
     await TgBot.send_message(f"Получен {ticket.title}")
