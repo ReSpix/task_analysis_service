@@ -83,3 +83,11 @@ class Event(BaseModel):
         and self.resource.type == 'task' \
         and self.parent is not None \
         and self.parent.type == 'project'
+    
+    
+    def is_story_add(self) -> bool:
+        return \
+        self.action == ActionType.ADDED \
+        and self.resource.type == 'story' \
+        and self.parent is not None \
+        and self.parent.type == 'task'

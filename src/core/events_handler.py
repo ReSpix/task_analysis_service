@@ -8,7 +8,7 @@ from database.models import Ticket, Status
 from database import Database
 import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from asana import get_task_api, asana_client
+from asana import get_task_api, asana_client, get_projects_api
 from config_manager import get
 from tgbot import TgBot
 
@@ -70,6 +70,8 @@ async def handle_events(events: List[Event]):
             await on_tag_add(e)
         elif e.is_tag_removed():
             await on_tag_remove(e)
+        elif e.is_story_add():
+            await on_story_add(e)
 
 
 async def on_section_moved(event: Event):
@@ -238,3 +240,26 @@ async def on_tag_remove(event: Event):
                 return
             ticket.sub_contract = False
             session.add(ticket)
+
+async def on_story_add(event: Event):
+    projects_api = get_projects_api()
+
+    if projects_api is None:
+        return
+    
+    story = await projects_api.get_story(event.resource.gid)
+
+    if story['type'] == "comment":
+
+        notify = (await get("notify_commented")) == "1"
+
+        if notify:
+            assert event.parent is not None
+            async with Database.make_session() as session:
+                ticket_gid = event.parent.gid
+                ticket = await Ticket.get_by_gid(session, ticket_gid)
+                
+                if ticket is None:
+                    return
+                
+                await TgBot.send_message(f"На '{ticket.title}' добавлен комментарий '{story['text']}'")

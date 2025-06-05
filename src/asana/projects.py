@@ -30,3 +30,9 @@ class ProjectsApi:
 
         res = await self._client.get(url)
         return res['data']
+
+    async def get_story(self, story_gid: str):
+        url = f"stories/{story_gid}"
+
+        res = await self._client.get(url)
+        return res['data']
