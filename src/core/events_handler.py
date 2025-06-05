@@ -11,6 +11,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from asana import get_task_api, asana_client, get_projects_api
 from config_manager import get
 from tgbot import TgBot
+from zoneinfo import ZoneInfo
 
 
 scheduler = AsyncIOScheduler()
@@ -81,7 +82,9 @@ async def on_section_moved(event: Event):
             await on_new_task_added(event)
             return
         assert event.parent is not None
-        status = Status(text=event.parent.name, ticket=ticket)
+
+        status = Status(text=event.parent.name, ticket=ticket,
+                        datetime=event.created_at_local_timezone)
         session.add(status)
         logging.info(f"Задача {ticket.title} перемещена в '{status.text}'")
 
@@ -101,7 +104,7 @@ async def on_new_task_added(event: Event):
 
         if ticket is not None:
             return
-        
+
         task_api = get_task_api()
         assert task_api is not None
         try:
@@ -113,11 +116,11 @@ async def on_new_task_added(event: Event):
                 return
 
         ticket = Ticket(
-            gid=ticket_data['gid'], title=ticket_data['name'], text=ticket_data['notes'])
+            gid=ticket_data['gid'], title=ticket_data['name'], text=ticket_data['notes'], created_at=event.created_at_local_timezone)
         session.add(ticket)
 
         status = Status(
-            text=ticket_data['memberships'][0]['section']['name'], ticket=ticket)
+            text=ticket_data['memberships'][0]['section']['name'], ticket=ticket, datetime=event.created_at_local_timezone)
         session.add(status)
 
 
@@ -153,12 +156,12 @@ async def on_task_delete(event: Event):
                 f"Удалена несущесвтующая задачи. gid={event.resource.gid}")
             return
         ticket.deleted = True
-        ticket.deleted_at = datetime.now()
+        ticket.deleted_at = event.created_at_local_timezone
         session.add(ticket)
 
-        status = Status(text='Удалено', ticket=ticket)
+        status = Status(text='Удалено', ticket=ticket, datetime=event.created_at_local_timezone)
         session.add(status)
-    
+
     notify = (await get("notify_deleted")) == "1"
     if notify:
         await TgBot.send_message(f"'{ticket.title}' удалено")
@@ -174,7 +177,7 @@ async def on_task_undelete(event: Event):
         ticket.deleted = False
         session.add(ticket)
 
-        status = Status(text="Удаление отменено", ticket=ticket)
+        status = Status(text="Удаление отменено", ticket=ticket, datetime=event.created_at_local_timezone)
         session.add(status)
 
 
@@ -183,13 +186,13 @@ async def on_tag_add(event: Event):
     assert event.parent.name is not None
 
     tag = await get("tag")
-    
+
     if tag is not None and tag.lower() == event.parent.name.lower():
         ticket_gid = event.resource.gid
 
         assert sub_events_api is not None
         sub_project_gid = sub_events_api.get_resource()
-        
+
         task_api = get_task_api()
         assert task_api is not None
         res = await task_api.add_to_project(ticket_gid, sub_project_gid)
@@ -215,7 +218,7 @@ async def on_tag_add(event: Event):
                 return
             ticket.sub_contract = True
             session.add(ticket)
-            # status = Status(text='Перемещено в субподряд', ticket=ticket)
+            # status = Status(text='Перемещено в субподряд', ticket=ticket, datetime=event.created_at_local_timezone)
             # session.add(status)
 
     notify = (await get("notify_sub_tag_setted")) == "1"
@@ -228,7 +231,7 @@ async def on_tag_remove(event: Event):
     assert event.parent.name is not None
 
     tag = await get("tag")
-    
+
     if tag is not None and tag.lower() == event.parent.name.lower():
         ticket_gid = event.resource.gid
 
@@ -241,12 +244,13 @@ async def on_tag_remove(event: Event):
             ticket.sub_contract = False
             session.add(ticket)
 
+
 async def on_story_add(event: Event):
     projects_api = get_projects_api()
 
     if projects_api is None:
         return
-    
+
     story = await projects_api.get_story(event.resource.gid)
 
     if story['type'] == "comment":
@@ -258,8 +262,8 @@ async def on_story_add(event: Event):
             async with Database.make_session() as session:
                 ticket_gid = event.parent.gid
                 ticket = await Ticket.get_by_gid(session, ticket_gid)
-                
+
                 if ticket is None:
                     return
-                
+
                 await TgBot.send_message(f"На '{ticket.title}' добавлен комментарий '{story['text']}'")

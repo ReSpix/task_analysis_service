@@ -31,6 +31,10 @@ class Event(BaseModel):
     parent: Optional[Resource] = None
     change: Optional[Change] = None
 
+    @property
+    def created_at_local_timezone(self):
+        return self.created_at.astimezone(datetime.now().astimezone().tzinfo)
+
     def is_status_change_event(self) -> bool:
         return \
             self.action == ActionType.MOVED \
@@ -44,7 +48,7 @@ class Event(BaseModel):
             and self.parent is not None \
             and self.parent.type == 'project' \
             and self.resource.type == 'task'
-    
+
     def is_field_change(self) -> bool:
         return \
             self.action == ActionType.CHANGED \
@@ -57,37 +61,36 @@ class Event(BaseModel):
         return \
             self.action == ActionType.DELETED \
             and self.resource.type == 'task'
-    
+
     def is_undeleted_task(self) -> bool:
         return \
             self.action == ActionType.UNDELETED \
             and self.resource.type == 'task'
-    
+
     def is_tag_add(self) -> bool:
         return \
             self.action == ActionType.ADDED \
             and self.resource.type == 'task' \
             and self.parent is not None \
             and self.parent.type == 'tag'
-    
+
     def is_tag_removed(self) -> bool:
         return \
             self.action == ActionType.REMOVED \
             and self.resource.type == 'task' \
             and self.parent is not None \
             and self.parent.type == 'tag'
-    
+
     def is_removed_from_project(self) -> bool:
         return \
-        self.action == ActionType.REMOVED \
-        and self.resource.type == 'task' \
-        and self.parent is not None \
-        and self.parent.type == 'project'
-    
-    
+            self.action == ActionType.REMOVED \
+            and self.resource.type == 'task' \
+            and self.parent is not None \
+            and self.parent.type == 'project'
+
     def is_story_add(self) -> bool:
         return \
-        self.action == ActionType.ADDED \
-        and self.resource.type == 'story' \
-        and self.parent is not None \
-        and self.parent.type == 'task'
+            self.action == ActionType.ADDED \
+            and self.resource.type == 'story' \
+            and self.parent is not None \
+            and self.parent.type == 'task'
