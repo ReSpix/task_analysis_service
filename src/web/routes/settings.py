@@ -1,11 +1,15 @@
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import RedirectResponse
+from sqlalchemy import delete, select
 from ..templates import settings_template
 from asana.client import AsanaClient, AsanaApiError
 from asana import asana_client, ProjectsApi, try_create_apis
 import logging
 from starlette.status import HTTP_303_SEE_OTHER
 from config_manager import set, get
+from database import Database
+from database.models import TelegramConfig
+from tgbot import TgBot
 
 
 settings_router = APIRouter(prefix='/settings')
@@ -151,3 +155,98 @@ async def additional_asana_submit(request: Request):
     request.session['data'] = True
 
     return RedirectResponse(settings_router.prefix+"/asana/additional", status_code=HTTP_303_SEE_OTHER)
+
+
+@settings_router.get("/telegram")
+async def telegram_settings(request: Request):
+    telegram_token = await get("telegram_token")
+
+    notify_created = (await get("notify_created")) == "1"
+    notify_status_changed = (await get("notify_status_changed")) == "1"
+    notify_deleted = (await get("notify_deleted")) == "1"
+    notify_sub_tag_setted = (await get("notify_sub_tag_setted")) == "1"
+    notify_commented = (await get("notify_commented")) == "1"
+
+    async with Database.make_session() as session:
+        query_chats = select(TelegramConfig).where(
+            TelegramConfig.destination_type == 'chat')
+        res_chats = await session.execute(query_chats)
+        chats = res_chats.scalars().all()
+
+        query_users = select(TelegramConfig).where(
+            TelegramConfig.destination_type == 'user')
+        res_users = await session.execute(query_users)
+        users = res_users.scalars().all()
+
+        chats = "\n".join([d.destination_id for d in chats])
+        users = "\n".join([d.destination_id for d in users])
+
+    return settings_template("telegram.html",
+                             {"request": request,
+                              "telegram_token": telegram_token,
+                              "users": users,
+                              "chats": chats,
+                              "notify_created": notify_created,
+                              "notify_status_changed": notify_status_changed,
+                              "notify_deleted": notify_deleted,
+                              "notify_sub_tag_setted": notify_sub_tag_setted,
+                              "notify_commented": notify_commented,
+                              })
+
+
+@settings_router.post("/telegram")
+async def telegram_settings_submit(request: Request):
+    form = await request.form()
+
+    bot_token = form.get("telegram_token")
+    if bot_token is not None:
+        assert isinstance(bot_token, str)
+        is_token_correct = await TgBot.check_token(bot_token)
+        if is_token_correct:
+            await set("telegram_token", bot_token)
+
+    notify_created = form.get("created") is not None
+    notify_status_changed = form.get("status_changed") is not None
+    notify_deleted = form.get("deleted") is not None
+    notify_sub_tag_setted = form.get("sub_tag_setted") is not None
+    notify_commented = form.get("commented") is not None
+
+    await set("notify_created", "1" if notify_created else "0")
+    await set("notify_status_changed", "1" if notify_status_changed else "0")
+    await set("notify_deleted", "1" if notify_deleted else "0")
+    await set("notify_sub_tag_setted", "1" if notify_sub_tag_setted else "0")
+    await set("notify_commented", "1" if notify_commented else "0")
+
+    chats = form.get("chats")
+    if chats is not None:
+        assert isinstance(chats, str)
+        chats = chats.split("\r\n")
+
+    users = form.get("users")
+    if users is not None:
+        assert isinstance(users, str)
+        users = users.split("\r\n")
+
+    async with Database.make_session() as session:
+        query = delete(TelegramConfig)
+        await session.execute(query)
+
+        if chats is not None:
+            for chat in chats:
+                if len(chat) == 0 or chat[0] != "-":
+                    continue
+
+                tg_conf = TelegramConfig(
+                    destination_id=chat, destination_type='chat')
+                session.add(tg_conf)
+
+        if users is not None:
+            for user in users:
+                if len(user) == 0 or user[0] != "@":
+                    continue
+
+                tg_conf = TelegramConfig(
+                    destination_id=user, destination_type='user')
+                session.add(tg_conf)
+
+    return RedirectResponse(settings_router.prefix+"/telegram", status_code=HTTP_303_SEE_OTHER)

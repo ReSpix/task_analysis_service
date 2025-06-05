@@ -29,14 +29,14 @@ class Ticket(Base):
         back_populates="ticket", uselist=False, lazy='selectin')
     statuses: Mapped[List["Status"]] = relationship(
         back_populates="ticket", lazy='selectin')
-    
+
     @hybrid_property
     def last_status(self) -> Optional["Status"]:
         """Возвращает последний статус тикета (с наибольшим datetime)"""
         if not self.statuses:  # Если статусов нет
             return None
         return max(self.statuses, key=lambda s: s.datetime)
-    
+
     @last_status.expression
     def last_status_exp(cls):
         """SQL-выражение для запросов, возвращающее последний статус"""
@@ -70,7 +70,7 @@ class Ticket(Base):
         logging.info(ticket.title)
         ticket.additional_info = info
         return ticket
-    
+
     @classmethod
     async def get_by_gid(cls, session: AsyncSession, gid: str) -> Optional[Ticket]:
         query = select(Ticket).where(Ticket.gid == gid)
@@ -91,7 +91,8 @@ class AdditionalTicketInfo(Base):
 
     ticket_id: Mapped["Ticket"] = mapped_column(
         ForeignKey("tickets.id"), unique=True, nullable=False)
-    ticket: Mapped["Ticket"] = relationship(back_populates="additional_info", lazy='selectin')
+    ticket: Mapped["Ticket"] = relationship(
+        back_populates="additional_info", lazy='selectin')
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]):
@@ -111,7 +112,7 @@ class Status(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     text: Mapped[str]
-    datetime: Mapped[datetime] = mapped_column(default=datetime.now)    
+    datetime: Mapped[datetime] = mapped_column(default=datetime.now)
     ticket_id: Mapped["Ticket"] = mapped_column(ForeignKey("tickets.id"))
     ticket: Mapped["Ticket"] = relationship(back_populates="statuses")
 
@@ -125,3 +126,11 @@ class Config(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     key: Mapped[str] = mapped_column(unique=True)
     value: Mapped[str]
+
+
+class TelegramConfig(Base):
+    __tablename__ = "telegram_config"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    destination_id: Mapped[str]
+    destination_type: Mapped[str]
