@@ -93,6 +93,7 @@ async def post_form(request: Request):
 
 @settings_router.get("/asana/additional")
 async def additional_asana_settings(request: Request):
+    is_after_set = request.session.pop("data", None)
 
     main_gid = await get("main_project_gid")
     sub_gid = await get("sub_project_gid")
@@ -126,7 +127,8 @@ async def additional_asana_settings(request: Request):
                               "main_sections": main_sections,
                               "sub_sections": sub_sections,
                               "tags": tags,
-                              "data": data
+                              "data": data,
+                              "is_after_set": is_after_set
                               })
 
 
@@ -145,5 +147,7 @@ async def additional_asana_submit(request: Request):
     await set("main_section", main_section)
     await set("sub_section", sub_section)
     await set("tag", tag)
+
+    request.session['data'] = True
 
     return RedirectResponse(settings_router.prefix+"/asana/additional", status_code=HTTP_303_SEE_OTHER)
