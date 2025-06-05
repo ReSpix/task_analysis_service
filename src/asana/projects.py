@@ -1,5 +1,6 @@
 from .client import asana_client, AsanaClient, AsanaApiError
 
+
 class ProjectsApi:
     def __init__(self, client: AsanaClient = asana_client):
         self._client: AsanaClient = client
@@ -8,7 +9,7 @@ class ProjectsApi:
         url = 'projects'
         res = await self._client.get(url)
         return res['data']
-    
+
     async def is_project(self, gid):
         url = "projects/" + gid
         try:
@@ -17,3 +18,15 @@ class ProjectsApi:
             if e.status == 400:
                 return False
         return True
+
+    async def get_sections(self, project_gid):
+        url = "projects/" + project_gid + "/sections"
+
+        res = await self._client.get(url)
+        return res['data']
+
+    async def get_tags(self):
+        url = "tags"
+
+        res = await self._client.get(url)
+        return res['data']
