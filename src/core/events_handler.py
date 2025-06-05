@@ -12,6 +12,7 @@ from asana import get_task_api, asana_client
 from config_manager import get
 from tgbot import TgBot
 
+
 scheduler = AsyncIOScheduler()
 update_interval = 5
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
@@ -81,10 +82,18 @@ async def on_section_moved(event: Event):
         status = Status(text=event.parent.name, ticket=ticket)
         session.add(status)
         logging.info(f"Задача {ticket.title} перемещена в '{status.text}'")
-        await TgBot.send_message(f"Задача {ticket.title} перемещена в '{status.text}'")
+
+        notify = (await get("notify_status_changed")) == "1"
+        if notify:
+            await TgBot.send_message(f"'{ticket.title}' перемещено в '{status.text}'")
 
 
 async def on_new_task_added(event: Event):
+    watch = (await get("watch_tasks")) == "1"
+
+    if not watch:
+        return
+
     async with Database.make_session() as session:
         ticket = await Ticket.get_by_gid(session, event.resource.gid)
 
@@ -111,6 +120,11 @@ async def on_new_task_added(event: Event):
 
 
 async def on_field_changed(event: Event):
+    watch = (await get("watch_field_changes")) == "1"
+
+    if not watch:
+        return
+
     async with Database.make_session() as session:
         ticket = await Ticket.get_by_gid(session, event.resource.gid)
 
@@ -142,6 +156,10 @@ async def on_task_delete(event: Event):
 
         status = Status(text='Удалено', ticket=ticket)
         session.add(status)
+    
+    notify = (await get("notify_deleted")) == "1"
+    if notify:
+        await TgBot.send_message(f"'{ticket.title}' удалено")
 
 
 async def on_task_undelete(event: Event):
@@ -197,6 +215,10 @@ async def on_tag_add(event: Event):
             session.add(ticket)
             # status = Status(text='Перемещено в субподряд', ticket=ticket)
             # session.add(status)
+
+    notify = (await get("notify_sub_tag_setted")) == "1"
+    if notify:
+        await TgBot.send_message(f"'{ticket.title}' отмечено как субподряд")
 
 
 async def on_tag_remove(event: Event):

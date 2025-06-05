@@ -26,4 +26,8 @@ async def receive_form(data: dict):
         session.add(status_create)
         session.add(status_section)
         session.add(ticket)
-    await TgBot.send_message(f"Получен {ticket.title}")
+    
+    notify = (await get("notify_created")) == "1"
+
+    if notify:
+        await TgBot.send_message(f"Получено '{ticket.title}'")
