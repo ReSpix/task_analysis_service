@@ -8,7 +8,7 @@
     {{ selected_manager }}
     {% endif %}
 </h2>
-<form id="form" method="get" action="" class="max-w-full mx-auto grid gap-6 md:grid-cols-4">
+<form id="form" method="get" action="" class="max-w-full mx-auto grid gap-6 lg:grid-cols-4 md:grid-cols-3">
     <div>
         <label for="manager" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Внедренец</label>
         <select required id="manager" name="manager"
@@ -34,7 +34,7 @@
     </div>
     <div>
         <label for="save_btn"
-            class="invisible block mb-2 text-sm font-medium text-gray-900 dark:text-white">Кнопка</label>
+            class="invisible hidden lg:block mb-2 text-sm font-medium text-gray-900 dark:text-white">Кнопка</label>
         <button id="save_btn"
             class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Сформировать</button>
 
