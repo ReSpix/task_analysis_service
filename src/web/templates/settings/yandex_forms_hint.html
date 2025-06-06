@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title%}
+Настройка Яндекс Форм
+{% endblock %}
+
+
+{% block content %}
+
+<h2 class="text-4xl font-extrabold dark:text-white my-8">Инструкции по настройке Яндекс Формы</h2>
+
+<p class="mb-3 text-gray-800 dark:text-gray-300">
+    Все настройки Яндекс Форм производятся в
+    <a href="https://forms.yandex.ru/admin" target="_blank"
+        class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline">
+        сервисе Яндекс Формы
+    </a>, в разделе "Интеграции" необходимой формы.
+</p>
+<p class="text-gray-800 dark:text-gray-300">
+    Для настройки интеграции необходимо создать "Запрос с заданым методом":
+</p>
+
+<ul class="max-w-full space-y-1 text-gray-800 list-disc list-inside dark:text-gray-300">
+    <li>
+        URL:
+        <strong class="font-semibold text-gray-900 dark:text-white">
+            https://[IP адрес сервера]:[портсервера]/receive/{Ответы на все вопросы}
+        </strong>
+    </li>
+    <li>
+        Метод: <strong class="font-semibold text-gray-900 dark:text-white">GET</strong>
+    </li>
+    <li>
+        Тело запроса: <strong class="font-semibold text-gray-900 dark:text-white">пусто</strong>
+    </li>
+    <li>
+        Заголовки: <strong class="font-semibold text-gray-900 dark:text-white">пусто</strong>
+    </li>
+</ul>
+
+
+<div class="flex justify-center w-full my-8">
+    <figure style="max-width:672px">
+        <img class="h-auto max-w-full rounded-lg" src="{{ url_for('static', path='/images/1.png')}}"
+            alt="image description">
+        <figcaption class="mt-2 text-sm text-center text-gray-500 dark:text-gray-400">Запрос с заданым методом
+        </figcaption>
+    </figure>
+</div>
+
+
+<p class="mb-3 text-gray-800 dark:text-gray-300">
+    Переменную "Ответы на все вопросы" необходимо настроить следующим образом:
+</p>
+
+<ul class="max-w-full space-y-1 text-gray-800 list-disc list-inside dark:text-gray-300">
+    <li>
+        Вопросы:
+        <strong class="font-semibold text-gray-900 dark:text-white">
+            выбрать все
+        </strong>
+    </li>
+    <li>
+        Фильтры: <strong class="font-semibold text-gray-900 dark:text-white">пусто</strong>
+    </li>
+    <li>
+        Форматирование ответа: <strong class="font-semibold text-gray-900 dark:text-white">JSON</strong>
+    </li>
+    <li>
+        Только вопросы с ответами: <strong class="font-semibold text-gray-900 dark:text-white">нет</strong>
+    </li>
+</ul>
+
+
+<div class="flex justify-center w-full my-8">
+    <figure style="max-width:672px">
+        <img class="h-auto max-w-full rounded-lg" src="{{ url_for('static', path='/images/2.png')}}"
+            alt="image description">
+        <figcaption class="mt-2 text-sm text-center text-gray-500 dark:text-gray-400">Ответы на все вопросы
+        </figcaption>
+    </figure>
+</div>
+
+<div class="h-24 hidden sm:block"></div>
+
+{% endblock %}

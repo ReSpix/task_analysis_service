@@ -255,3 +255,9 @@ async def telegram_settings_submit(request: Request):
                 session.add(tg_conf)
 
     return RedirectResponse(settings_router.prefix+"/telegram", status_code=HTTP_303_SEE_OTHER)
+
+
+@settings_router.get("/yandex-forms")
+async def yandex_hints(request: Request):
+    return settings_template("yandex_forms_hint.html",
+                             {"request": request,})
