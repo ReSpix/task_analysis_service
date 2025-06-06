@@ -24,22 +24,33 @@ class EventsApi:
             sync = await get(self._get_sync_key())
             if sync is not None:
                 self.sync = sync
+        all_events = []
+        original_sync = self.sync
+        while True:
+            params = {'sync': original_sync, "resource": self.resource}
+            url = f"events"
+            try:
+                data = await self._client.get(url, params)
+            except AsanaApiError as e:
+                if e.status == 412:
+                    await self._update_sync_token(e.body)
+                    logging.info("Sync token missing or expired. Fetched new")
+                    return []
+                else:
+                    raise
 
-        params = {'sync': self.sync, "resource": self.resource}
-        url = f"events"
-        try:
-            data = await self._client.get(url, params)
-            await self._update_sync_token(data)
-        except AsanaApiError as e:
-            if e.status == 412:
-                await self._update_sync_token(e.body)
-                logging.info("Sync token missing or expired. Fetched new")
-                return []
+            events = parse_events(data)
+            all_events.extend(clear_events(events))
+
+            if data['has_more']:
+                continue
             else:
-                raise
-
-        events = parse_events(data)
-        return clear_events(events)
+                await self._update_sync_token(data)
+                break
+        
+        if len(all_events) > 0:
+            logging.info(f"Получено {len(all_events)} событий с ресурса {self.resource}")
+        return all_events
 
     async def _update_sync_token(self, source: dict):
         if 'sync' not in source:
