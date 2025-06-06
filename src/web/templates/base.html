@@ -7,6 +7,21 @@
     <title>{% block title %}Анализ нарядов{% endblock %}</title>
     <link rel="icon" href="{{ url_for('static', path='favicon.ico') }}" type="image/x-icon">
     <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
+    <style>
+        .auto-fade-out {
+            animation: fadeOut 1s ease-out forwards 4s;
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+
+            to {
+                opacity: 0;
+            }
+        }
+    </style>
 </head>
 
 <body class="dark:bg-gray-900">
@@ -136,7 +151,12 @@
                         </li>
                         <li>
                             <a href="/settings/yandex-forms"
-                                class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Инструкция Яндекс Формы</a>
+                                class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Инструкция
+                                Яндекс Формы</a>
+                        </li>
+                        <li>
+                            <a href="/settings/app"
+                                class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Приложение</a>
                         </li>
                     </ul>
                 </li>

@@ -186,6 +186,8 @@ async def telegram_settings(request: Request):
         chats = "\n".join([d.destination_id for d in chats])
         users = "\n".join([d.destination_id for d in users])
 
+    saved = request.session.pop("saved", None)
+
     return settings_template("telegram.html",
                              {"request": request,
                               "telegram_token": telegram_token,
@@ -196,6 +198,7 @@ async def telegram_settings(request: Request):
                               "notify_deleted": notify_deleted,
                               "notify_sub_tag_setted": notify_sub_tag_setted,
                               "notify_commented": notify_commented,
+                              "saved": saved
                               })
 
 
@@ -254,10 +257,35 @@ async def telegram_settings_submit(request: Request):
                     destination_id=user, destination_type='user')
                 session.add(tg_conf)
 
+    request.session['saved'] = True
+
     return RedirectResponse(settings_router.prefix+"/telegram", status_code=HTTP_303_SEE_OTHER)
 
 
 @settings_router.get("/yandex-forms")
 async def yandex_hints(request: Request):
     return settings_template("yandex_forms_hint.html",
-                             {"request": request,})
+                             {"request": request, })
+
+
+@settings_router.get("/app")
+async def settings_app(request: Request):
+    watch_field_changes = (await get("watch_field_changes")) == "1"
+    saved = request.session.pop("saved", None)
+
+    return settings_template("app.html",
+                             {"request": request,
+                              "watch_field_changes": watch_field_changes,
+                              "saved": saved
+                              })
+
+
+@settings_router.post("/app")
+async def settings_app_submit(request: Request):
+    form = await request.form()
+    watch_field_changes = form.get("watch_field_changes") is not None
+    await set("watch_field_changes", "1" if watch_field_changes else "0")
+
+    request.session['saved'] = True
+
+    return RedirectResponse(settings_router.prefix+"/app", status_code=HTTP_303_SEE_OTHER)

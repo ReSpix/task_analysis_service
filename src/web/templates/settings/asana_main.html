@@ -31,7 +31,7 @@
                 здесь
             </a>
         </p>
-        <p class="mt-2 text-sm text-green-600 dark:text-green-500">{{ data['message'] }}</p>
+        <p class="mt-2 text-sm text-green-600 dark:text-green-500 auto-fade-out">{{ data['message'] }}</p>
     </div>
     {% if projects is not none %}
     <div class="grid gap-6 mb-6 md:grid-cols-2">
@@ -48,7 +48,7 @@
             </select>
             {% if data['project_set'] %}
             {% if data['project_success'] %}
-            <p class="mt-2 text-sm text-green-600 dark:text-green-500">{{ data['project_message_1'] }}</p>
+            <p class="mt-2 text-sm text-green-600 dark:text-green-500 auto-fade-out">{{ data['project_message_1'] }}</p>
             {% else %}
             <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ data['project_message_1'] }}</p>
             {% endif %}
@@ -67,7 +67,7 @@
             </select>
             {% if data['project_set'] %}
             {% if data['project_success'] %}
-            <p class="mt-2 text-sm text-green-600 dark:text-green-500">{{ data['project_message_2'] }}</p>
+            <p class="mt-2 text-sm text-green-600 dark:text-green-500 auto-fade-out">{{ data['project_message_2'] }}</p>
             {% else %}
             <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ data['project_message_2'] }}</p>
             {% endif %}
