@@ -3,7 +3,7 @@ from fastapi import APIRouter, Request
 from web.templates import reports_template
 from database import Database
 from database.models import AdditionalTicketInfo, Ticket
-from sqlalchemy import case, func, not_, select, distinct, and_
+from sqlalchemy import case, desc, func, not_, select, distinct, and_
 from datetime import datetime, timedelta
 from utils import create_date_period, TimePeroid
 
@@ -34,6 +34,10 @@ async def manager_report(request: Request, manager: str = "", date_start: str = 
                     Ticket.created_at >= date_period.start,
                     Ticket.created_at < date_period.end + timedelta(days=1),
                     AdditionalTicketInfo.worker_fullname == manager
+                )
+            ).order_by(
+                desc(
+                    Ticket.created_at
                 )
             )
             res = await session.execute(query)
