@@ -187,6 +187,8 @@ async def telegram_settings(request: Request):
         users = "\n".join([d.destination_id for d in users])
 
     saved = request.session.pop("saved", None)
+    if telegram_token is None:
+        telegram_token = ""
 
     return settings_template("telegram.html",
                              {"request": request,
