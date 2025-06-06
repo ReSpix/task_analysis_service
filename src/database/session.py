@@ -9,14 +9,24 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.pool import NullPool
 from .models import Base
 import logging
+import os
 
 
 class AsyncDatabase:
-    db_url = f'sqlite+aiosqlite:///./database/db.sqlite'
+    db_url_local = f'sqlite+aiosqlite:///./database/db.sqlite'
+
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+    RELATIVE_DB_PATH = os.path.join(BASE_DIR, '..', '..', 'data', 'db.sqlite')
+    ABSOLUTE_DB_PATH = os.path.abspath(RELATIVE_DB_PATH)
+
+    db_url_external = f"sqlite+aiosqlite:///{ABSOLUTE_DB_PATH}"
 
     def __init__(self, echo=False):
+        os.makedirs(os.path.dirname(__class__.ABSOLUTE_DB_PATH), exist_ok=True)
+
         self.engine = create_async_engine(
-            __class__.db_url,
+            __class__.db_url_external,
             echo=echo,
             poolclass=NullPool,
         )

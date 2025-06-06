@@ -6,7 +6,7 @@ services:
       - "8000:8000"
     volumes:
       - ./src:/app # DEV
-      # - database:/app/database # PROD
+      - database:/data
     restart: always
     # env_file:
       # - .env
