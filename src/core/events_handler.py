@@ -30,9 +30,8 @@ async def request_events():
         main_project_gid = await get("main_project_gid")
         sub_project_gid = await get("sub_project_gid")
 
-        logging.info(f"{main_project_gid} {sub_project_gid}")
-
         if main_project_gid is not None and sub_project_gid is not None:
+            logging.info(f"{main_project_gid} {sub_project_gid}")
             events_api = EventsApi(asana_client, main_project_gid)
             sub_events_api = EventsApi(asana_client, sub_project_gid)
         else:
