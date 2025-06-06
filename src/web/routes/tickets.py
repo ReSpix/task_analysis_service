@@ -3,10 +3,11 @@ from fastapi import APIRouter, Request
 from fastapi.responses import RedirectResponse
 from starlette.status import HTTP_303_SEE_OTHER
 from database import Database
-from sqlalchemy import and_, desc, select
+from sqlalchemy import and_, desc, distinct, select
 from database.models import Ticket, Status
 from ..templates import tickets_template
 from utils import format_timedelta_pretty
+import logging
 
 
 ticket_router = APIRouter(prefix='/tickets')
@@ -61,7 +62,7 @@ async def challenge(request: Request):
 
 
 @ticket_router.get("/challenge/all")
-async def challengea_all(request: Request):
+async def challengea_all(request: Request, status: str = ""):
     async with Database.make_session() as session:
         query = select(
             Ticket
@@ -75,11 +76,30 @@ async def challengea_all(request: Request):
 
         result = await session.execute(query)
         tickets = result.scalars().all()
+        tickets = list(tickets)
+
+        statuses = []
+        for ticket in tickets:
+            if ticket.last_status == None:
+                continue
+            statuses.append(ticket.last_status.text)
+
+        filtered_tickets = []
+        if status != "":
+            for ticket in tickets:
+                if ticket.last_status is None:
+                    logging.info("ПУСТО!!!")
+                    continue
+                if ticket.last_status.text == status:
+                    filtered_tickets.append(ticket)
+            tickets = filtered_tickets
 
         return tickets_template('challenge.html',
                                 {"request": request,
                                  "tickets": tickets,
-                                 "all": True
+                                 "all": True,
+                                 "statuses": statuses,
+                                 "selected_status": status
                                  })
 
 

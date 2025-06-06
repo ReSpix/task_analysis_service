@@ -14,13 +14,13 @@
             <tr>
                 <th scope="col" class="px-2 py-3 w-4">
                 </th>
-                <th scope="col" class="px-6 py-3">
+                <th scope="col" class="px-2 py-3">
                     Заголовок
                 </th>
-                <th scope="col" class="px-6 py-3">
+                <th scope="col" class="px-2 py-3">
                     Задачи
                 </th>
-                <th scope="col" class="px-6 py-3">
+                <th scope="col" class="px-2 py-3">
                     Статус
                 </th>
             </tr>
@@ -40,9 +40,9 @@
                     </a>
 
                 </td>
-                <td class="px-6 py-4">{{ ticket.title }}</td>
-                <td class="px-6 py-4 whitespace-pre-line">{{ ticket.text }}</td>
-                <td class="px-6 py-4">{{ ticket.last_status.text }}</td>
+                <td class="px-2 py-4">{{ ticket.title }}</td>
+                <td class="px-2 py-4 whitespace-pre-line">{{ ticket.text }}</td>
+                <td class="px-2 py-4">{{ ticket.last_status.text }}</td>
             </tr>
             {% endfor %}
         </tbody>
