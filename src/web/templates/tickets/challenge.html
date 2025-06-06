@@ -1,6 +1,28 @@
 {% extends "base.html" %}
+{% block title%}
+
+{% if all %}
+Все челленджи
+{% else %}
+Активные челленжи
+{% endif %}
+
+{% endblock %}
+
+
 {% block content %}
-<h2 class="text-4xl font-extrabold dark:text-white my-8">Челленжи</h2>
+<h2 class="text-4xl font-extrabold dark:text-white my-8">
+    {% if all %}
+    Все челленджи
+    {% else %}
+    Активные челленжи
+    {% endif %}
+</h2>
+<div class="flex w-full">
+    <p id="helper-text-explanation" class="mb-2 text-sm text-gray-500 dark:text-gray-400">
+    Сортировка: последние полученные сверху
+    </p>
+</div>
 <div class="relative overflow-x-auto shadow-md dark:shadow-gray-800 sm:rounded-lg">
     <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">

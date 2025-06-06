@@ -3,7 +3,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import RedirectResponse
 from starlette.status import HTTP_303_SEE_OTHER
 from database import Database
-from sqlalchemy import select
+from sqlalchemy import and_, desc, select
 from database.models import Ticket, Status
 from ..templates import tickets_template
 from utils import format_timedelta_pretty
@@ -38,19 +38,67 @@ async def tickets_all(request: Request):
 @ticket_router.get("/challenge")
 async def challenge(request: Request):
     async with Database.make_session() as session:
-        query = select(Ticket).where(Ticket.additional_info != None)
+        query = select(
+            Ticket
+        ).where(
+            and_(
+                Ticket.additional_info != None,
+                Ticket.deleted == False
+            )
+        ).order_by(
+            desc(
+                Ticket.created_at
+            )
+        )
 
         result = await session.execute(query)
         tickets = result.scalars().all()
 
-        return tickets_template('challenge.html', {"request": request, "tickets": tickets})
+        return tickets_template('challenge.html',
+                                {"request": request,
+                                 "tickets": tickets
+                                 })
+
+
+@ticket_router.get("/challenge/all")
+async def challengea_all(request: Request):
+    async with Database.make_session() as session:
+        query = select(
+            Ticket
+        ).where(
+            Ticket.additional_info != None
+        ).order_by(
+            desc(
+                Ticket.created_at
+            )
+        )
+
+        result = await session.execute(query)
+        tickets = result.scalars().all()
+
+        return tickets_template('challenge.html',
+                                {"request": request,
+                                 "tickets": tickets,
+                                 "all": True
+                                 })
 
 
 @ticket_router.get("/sub_contract")
 async def sub_contract(request: Request):
     async with Database.make_session() as session:
-        query = select(Ticket).where(
-            (Ticket.sub_contract == True) & (Ticket.deleted == False))
+        query = select(
+            Ticket
+        ).where(
+            and_(
+                Ticket.sub_contract == True,
+                Ticket.deleted == False
+
+            )
+        ).order_by(
+            desc(
+                Ticket.created_at
+            )
+        )
 
         result = await session.execute(query)
         tickets = result.scalars().all()
@@ -68,14 +116,14 @@ async def full_ticket_info(request: Request, ticket_id: int):
     if ticket is not None:
         ticket.statuses.sort(key=lambda x: x.datetime)
         for i in range(len(ticket.statuses) - 1):
-            ticket.statuses[i].time_to_next = ticket.statuses[i + 
+            ticket.statuses[i].time_to_next = ticket.statuses[i +
                                                               1].datetime - ticket.statuses[i].datetime
 
-        ticket.statuses[-1].time_to_next = datetime.now() - ticket.statuses[-1].datetime
+        ticket.statuses[-1].time_to_next = datetime.now() - \
+            ticket.statuses[-1].datetime
         ticket.statuses.sort(key=lambda x: x.datetime, reverse=True)
 
     return tickets_template('full_info.html', {"request": request, "ticket": ticket})
-
 
 
 @ticket_router.post("/delete/{ticket_id}")

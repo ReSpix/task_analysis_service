@@ -4,6 +4,11 @@
 <h2 class="text-3xl font-extrabold dark:text-white my-8">Субподряды</h2>
 
 {% if tickets|length > 0%}
+<div class="flex w-full">
+    <p id="helper-text-explanation" class="mb-2 text-sm text-gray-500 dark:text-gray-400">
+        Сортировка: последние полученные сверху
+    </p>
+</div>
 
 <div class="relative overflow-x-auto shadow-md dark:shadow-gray-800 sm:rounded-lg">
     <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
