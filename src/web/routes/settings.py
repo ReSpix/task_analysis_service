@@ -15,6 +15,11 @@ from tgbot import TgBot
 settings_router = APIRouter(prefix='/settings')
 
 
+@settings_router.get("/")
+async def settings_index(request: Request):
+    return RedirectResponse(settings_router.prefix+"/asana/", status_code=HTTP_303_SEE_OTHER)
+
+
 @settings_router.get("/asana")
 async def submit(request: Request):
     asana_token = asana_client.get_token()
