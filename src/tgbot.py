@@ -7,6 +7,9 @@ import logging
 import asyncio
 from typing import ClassVar
 from collections import deque
+import certifi
+import ssl
+from aiohttp.client_exceptions import ClientConnectionError, ClientConnectorCertificateError
 
 
 class TgBot:
@@ -21,11 +24,21 @@ class TgBot:
 
     @classmethod
     async def check_token(cls, token):
-        async with aiohttp.ClientSession() as session:
-            url = await cls.get_url(token)
-            async with session.get(url + "getMe") as response:
-                data = await response.json()
-        return data['ok']
+        try:
+            async with aiohttp.ClientSession() as session:
+                url = await cls.get_url(token)
+                ssl_context = ssl.create_default_context(
+                    cafile=certifi.where())
+                async with session.get(url + "getMe", ssl=ssl_context) as response:
+                    data = await response.json()
+        except (ClientConnectionError, ClientConnectorCertificateError) as e:
+            logging.critical(f"Не удалось связаться с Telegram. Ошибка: {e}")
+            return (False, "Не удалось связаться с Telegram")
+
+        if data['ok']:
+            return (True, "Успешно")
+        else:
+            return (False, "Неверный токен")
 
     @classmethod
     async def get_chats(cls, text: str = "") -> list[str]:
@@ -41,9 +54,16 @@ class TgBot:
         async with aiohttp.ClientSession() as session:
             url = await cls.get_url()
             body = {"chat_id": chat_id, "text": text}
-            async with session.get(url + "sendMessage", data=body) as response:
-                data = await response.json()
-                return data
+            try:
+                ssl_context = ssl.create_default_context(
+                    cafile=certifi.where())
+                async with session.get(url + "sendMessage", data=body, ssl=ssl_context) as response:
+                    data = await response.json()
+                    return data
+            except (ClientConnectionError, ClientConnectorCertificateError) as e:
+                logging.critical(
+                    f"Не удалось связаться с Telegram для отправки сообщения. Ошибка: {e}")
+                return None
 
     @classmethod
     async def send_message(cls, text: str):

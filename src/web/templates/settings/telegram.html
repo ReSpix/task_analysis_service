@@ -12,6 +12,9 @@
         <input type="text" id="telegram_token" name="telegram_token"
             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:borderlue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:borderlue-500"
             placeholder="" required value="{{ telegram_token }}" />
+        {% if telegram_token_error %}
+        <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ telegram_token_error_message }}</p>
+        {% endif %}
         <p id="helper-text-explanation" class="mt-2 text-sm text-gray-500 dark:text-gray-400">Создать токен бота можно
             <a href="https://telegram.me/BotFather" target="_blank"
                 class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline">

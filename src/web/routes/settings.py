@@ -186,7 +186,13 @@ async def telegram_settings(request: Request):
         chats = "\n".join([d.destination_id for d in chats])
         users = "\n".join([d.destination_id for d in users])
 
+    telegram_token_error = request.session.pop("telegram_token_error", None)
+    telegram_token_error_message = request.session.pop("telegram_token_error_message", None)
     saved = request.session.pop("saved", None)
+
+    if telegram_token_error:
+        saved = False
+
     if telegram_token is None:
         telegram_token = ""
 
@@ -200,7 +206,9 @@ async def telegram_settings(request: Request):
                               "notify_deleted": notify_deleted,
                               "notify_sub_tag_setted": notify_sub_tag_setted,
                               "notify_commented": notify_commented,
-                              "saved": saved
+                              "saved": saved,
+                              "telegram_token_error": telegram_token_error,
+                              "telegram_token_error_message": telegram_token_error_message
                               })
 
 
@@ -211,9 +219,13 @@ async def telegram_settings_submit(request: Request):
     bot_token = form.get("telegram_token")
     if bot_token is not None:
         assert isinstance(bot_token, str)
-        is_token_correct = await TgBot.check_token(bot_token)
+        is_token_correct, token_message = await TgBot.check_token(bot_token)
+        
         if is_token_correct:
             await set("telegram_token", bot_token)
+        else:
+            request.session['telegram_token_error'] = True
+            request.session['telegram_token_error_message'] = token_message
 
     notify_created = form.get("created") is not None
     notify_status_changed = form.get("status_changed") is not None
