@@ -23,7 +23,7 @@ logging.config.dictConfig(logging_config)
 
 
 app = FastAPI(lifespan=lifespan)
-app.add_middleware(SessionMiddleware, secret_key="v2np4vappy4n0cusununva")
+app.add_middleware(SessionMiddleware, secret_key="ZEfTgTOUTou8cpIlORwmU0fjiEc5j9LlP6Af6j3l4yA")
 app.include_router(web_router)
 app.mount("/static", StaticFiles(directory="web/static"), name="static")
 
