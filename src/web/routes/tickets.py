@@ -98,7 +98,7 @@ async def challengea_all(request: Request, status: str = ""):
                                 {"request": request,
                                  "tickets": tickets,
                                  "all": True,
-                                 "statuses": statuses,
+                                 "statuses": set(statuses),
                                  "selected_status": status
                                  })
 
@@ -159,6 +159,8 @@ async def delete_ticket(request: Request, ticket_id: int):
             ticket.deleted = True
             session.add(ticket)
             status = Status(text='Удалено вручную', ticket=ticket)
+            session.add(status)
+            status = Status(text='Удалено', ticket=ticket)
             session.add(status)
 
     return RedirectResponse(ticket_router.prefix+f"/full-info/{ticket_id}", status_code=HTTP_303_SEE_OTHER)
