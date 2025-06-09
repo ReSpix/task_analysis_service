@@ -250,7 +250,13 @@ async def on_story_add(event: Event):
     if projects_api is None:
         return
 
-    story = await projects_api.get_story(event.resource.gid)
+    try:
+        story = await projects_api.get_story(event.resource.gid)
+    except AsanaApiError as e:
+        if e.status == 404:
+            logging.info("Добавлена история к неотслеживаемой задаче")
+            return
+        raise
 
     if story['type'] == "comment":
 
