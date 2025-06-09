@@ -1,3 +1,4 @@
+import logging.config
 from fastapi.responses import RedirectResponse
 from database.models import Ticket, Status
 from database import Database
@@ -15,9 +16,11 @@ import asyncio
 from web import web_router
 from starlette.status import HTTP_303_SEE_OTHER
 from starlette.middleware.sessions import SessionMiddleware
+import os
+from log_config import logging_config
 
-logging.basicConfig(level=logging.INFO, stream=stdout,
-                    format="%(asctime)s [%(levelname)s] %(message)s")
+logging.config.dictConfig(logging_config)
+
 
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(SessionMiddleware, secret_key="v2np4vappy4n0cusununva")
@@ -29,7 +32,7 @@ app.mount("/static", StaticFiles(directory="web/static"), name="static")
 def index():
     if not asana.initialized:
         return RedirectResponse("/settings", status_code=HTTP_303_SEE_OTHER)
-    
+
     return RedirectResponse("/reports/all-managers", status_code=HTTP_303_SEE_OTHER)
 
 
