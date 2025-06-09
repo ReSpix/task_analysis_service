@@ -1,3 +1,4 @@
+import logging
 from .client import asana_client, AsanaClient, AsanaApiError
 
 
@@ -35,4 +36,12 @@ class ProjectsApi:
         url = f"stories/{story_gid}"
 
         res = await self._client.get(url)
+        return res['data']
+    
+    async def get_tasks(self, project_gid):
+        url = "projects/" + project_gid + "/tasks"
+
+        opt_fields = {"opt_fields": ["memberships.section.name"]}
+
+        res = await self._client.get(url, opt_fields)
         return res['data']

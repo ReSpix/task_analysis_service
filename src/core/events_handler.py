@@ -12,6 +12,7 @@ from asana import get_task_api, asana_client, get_projects_api
 from config_manager import get
 from tgbot import TgBot
 from zoneinfo import ZoneInfo
+from .late_update_tickets import after_downtime_update
 
 
 scheduler = AsyncIOScheduler()
@@ -33,6 +34,8 @@ async def request_events():
         if main_project_gid is not None and sub_project_gid is not None:
             logging.info(f"{main_project_gid} {sub_project_gid}")
             events_api = EventsApi(asana_client, main_project_gid)
+            events_api.register_sync_callback(after_downtime_update)
+
             sub_events_api = EventsApi(asana_client, sub_project_gid)
         else:
             return

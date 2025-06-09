@@ -1,4 +1,5 @@
-from typing import List
+import asyncio
+from typing import Any, Awaitable, Callable, Coroutine, List
 
 from ..models import Event
 from ..client import AsanaClient, AsanaApiError
@@ -12,6 +13,10 @@ class EventsApi:
         self._client: AsanaClient = client
         self.sync: str = ""
         self.resource = resource
+        self.missing_or_expired_sync_callback = None
+
+    def register_sync_callback(self, func: Callable[[], Coroutine[Any, Any, None]]):
+        self.missing_or_expired_sync_callback = func
 
     def _get_sync_key(self) -> str:
         return self.resource + "_sync"
@@ -35,6 +40,8 @@ class EventsApi:
                 if e.status == 412:
                     await self._update_sync_token(e.body)
                     logging.info("Sync token missing or expired. Fetched new")
+                    if self.missing_or_expired_sync_callback is not None:
+                        asyncio.create_task(self.missing_or_expired_sync_callback())
                     return []
                 else:
                     raise
@@ -47,9 +54,10 @@ class EventsApi:
             else:
                 await self._update_sync_token(data)
                 break
-        
+
         if len(all_events) > 0:
-            logging.info(f"Получено {len(all_events)} событий с ресурса {self.resource}")
+            logging.info(
+                f"Получено {len(all_events)} событий с ресурса {self.resource}")
         return all_events
 
     async def _update_sync_token(self, source: dict):
