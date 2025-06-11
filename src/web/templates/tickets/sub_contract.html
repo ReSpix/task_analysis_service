@@ -21,6 +21,9 @@
                 <th scope="col" class="px-2 py-3">
                     Задачи
                 </th>
+                <th scope="col" class="px-2 py-3">
+                    Статус
+                </th>
             </tr>
         </thead>
         <tbody>
@@ -40,6 +43,7 @@
                 </td>
                 <td class="px-2 py-4">{{ ticket.title }}</td>
                 <td class="px-2 py-4 whitespace-pre-line">{{ ticket.text }}</td>
+                <td class="px-2 py-4 whitespace-pre-line">{{ ticket.last_status.text }}</td>
             </tr>
             {% endfor %}
         </tbody>
