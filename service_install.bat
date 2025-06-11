@@ -107,8 +107,8 @@ if errorlevel 1 (
 "%NSSM_EXE%" set %SERVICE_NAME% Start SERVICE_AUTO_START
 
 if not exist "%LOG_DIR%" mkdir "%LOG_DIR%"
-"%NSSM_EXE%" set %SERVICE_NAME% AppStdout "%LOG_DIR%\additional_1.log"
-"%NSSM_EXE%" set %SERVICE_NAME% AppStderr "%LOG_DIR%\additional_2.log"
+"%NSSM_EXE%" set %SERVICE_NAME% AppStdout "%LOG_DIR%\stdout.log"
+"%NSSM_EXE%" set %SERVICE_NAME% AppStderr "%LOG_DIR%\stderr.log"
 "%NSSM_EXE%" set %SERVICE_NAME% AppRestartDelay 5000
 
 echo ============================================
