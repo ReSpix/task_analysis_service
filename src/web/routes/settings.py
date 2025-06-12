@@ -2,13 +2,14 @@ from fastapi import APIRouter, Request, Form
 from fastapi.responses import RedirectResponse
 from sqlalchemy import delete, select
 from ..templates import settings_template
+import asana
 from asana.client import AsanaClient, AsanaApiError
 from asana import asana_client, ProjectsApi, try_create_apis
 import logging
 from starlette.status import HTTP_303_SEE_OTHER
 from config_manager import set, get
 from database import Database
-from database.models import TelegramConfig
+from database.models import TelegramConfig, TagRule
 from tgbot import TgBot
 
 
@@ -30,13 +31,13 @@ async def submit(request: Request):
         main_project_gid = await get("main_project_gid")
         sub_project_gid = await get("sub_project_gid")
 
-        if main_project_gid is not None and sub_project_gid is not None:
+        if main_project_gid is not None:  # and sub_project_gid is not None:
             if data == None:
                 data = {}
             data['project_set'] = True
             data['success'] = True
             data['selected_main'] = main_project_gid
-            data['selected_sub'] = sub_project_gid
+            # data['selected_sub'] = sub_project_gid
             projects = await ProjectsApi(asana_client).get_projects()
 
     return settings_template("asana_main.html",
@@ -53,35 +54,35 @@ async def post_form(request: Request):
     asana_token = form.get("asana_token")
 
     main_project = form.get("main_project")
-    sub_project = form.get("sub_project")
+    # sub_project = form.get("sub_project")
 
-    if main_project is not None and sub_project is not None:
+    if main_project is not None:  # and sub_project is not None:
         assert isinstance(main_project, str)
-        assert isinstance(sub_project, str)
+        # assert isinstance(sub_project, str)
         data['project_set'] = True
 
         main_res = await ProjectsApi(asana_client).is_project(main_project)
-        sub_res = await ProjectsApi(asana_client).is_project(sub_project)
+        # sub_res = await ProjectsApi(asana_client).is_project(sub_project)
 
-        if main_project == sub_project:
-            data['project_message_1'] = "Выберите разные проекты"
-            data['project_message_2'] = "Выберите разные проекты"
+        # if main_project == sub_project:
+        #     data['project_message_1'] = "Выберите разные проекты"
+        #     data['project_message_2'] = "Выберите разные проекты"
 
         if not main_res:
             data['project_message_1'] = "Выберите проект"
 
-        if not sub_res:
-            data['project_message_2'] = "Выберите проект"
+        # if not sub_res:
+        #     data['project_message_2'] = "Выберите проект"
 
-        if main_res and sub_res:
+        if main_res:  # and sub_res:
             data['project_success'] = True
             await set("main_project_gid", main_project)
-            await set("sub_project_gid", sub_project)
+            # await set("sub_project_gid", sub_project)
             data['project_message_1'] = "Сохранено"
             data['project_message_2'] = "Сохранено"
 
             data['selected_main'] = main_project
-            data['selected_sub'] = sub_project
+            # data['selected_sub'] = sub_project
             await try_create_apis()
 
     try:
@@ -98,6 +99,124 @@ async def post_form(request: Request):
 
     request.session['data'] = data
     return RedirectResponse(settings_router.prefix+"/asana/", status_code=HTTP_303_SEE_OTHER)
+
+
+@settings_router.get("/asana/tag-rules")
+async def tag_rules_list(request: Request):
+    async with Database.make_session() as session:
+        tag_rules = (await session.execute(select(TagRule))).scalars().all()
+
+    return settings_template("tag_rules/list.html",
+                             {"request": request,
+                              "tag_rules": tag_rules,
+                              "initialized": asana.initialized
+                              })
+
+
+@settings_router.get("/asana/tag-rules/rule/new")
+async def new_tag_rule(request: Request):
+    data = {}
+    tags = await ProjectsApi(asana_client).get_tags()
+    async with Database.make_session() as session:
+        used_tags = (await session.execute(select(TagRule))).scalars().all()
+        used_tags = {t.tag for t in used_tags}
+
+    tags = {tag['name'] for tag in tags if tag['name'] not in used_tags}
+
+    projects = await ProjectsApi(asana_client).get_projects()
+
+    return settings_template("tag_rules/rule.html",
+                             {"request": request,
+                              "tags": tags,
+                              "data": data,
+                              "projects": projects,
+                              "tag_rule": None
+                              })
+
+
+@settings_router.post("/asana/tag-rules/rule/new")
+async def new_tag_rule_submit(request: Request):
+    form = await request.form()
+    tag = form.get("tag")
+    action = form.get("action")
+    project = form.get("project")
+    section = form.get("section")
+
+    async with Database.make_session() as session:
+        tag_rule = TagRule(tag=tag, action=action,
+                           project_gid=project, section_gid=section)
+        session.add(tag_rule)
+        await tag_rule.update_names(ProjectsApi(asana_client), session)
+
+    return RedirectResponse(settings_router.prefix+f"/asana/tag-rules/", status_code=HTTP_303_SEE_OTHER)
+
+
+@settings_router.get("/asana/tag-rules/rule/{id}")
+async def get_tag_rule(request: Request, id: int):
+    data = {}
+    tags = await ProjectsApi(asana_client).get_tags()
+    logging.info(tags)
+    tags = {tag['name'] for tag in tags}
+
+    projects = await ProjectsApi(asana_client).get_projects()
+
+    async with Database.make_session() as session:
+        tag_rule = (await session.execute(select(TagRule).where(TagRule.id == id))).scalars().one_or_none()
+        if tag_rule is None:
+            return RedirectResponse(settings_router.prefix+f"/asana/tag-rules", status_code=HTTP_303_SEE_OTHER)
+        
+    sections = await ProjectsApi(asana_client).get_sections(tag_rule.project_gid)
+
+    return settings_template("tag_rules/rule.html",
+                             {"request": request,
+                              "tags": tags,
+                              "data": data,
+                              "projects": projects,
+                              "tag_rule": tag_rule,
+                              "sections": sections
+                              })
+
+
+@settings_router.post("/asana/tag-rules/rule/{id}")
+async def update_tag_rule(request: Request, id: int):
+    form = await request.form()
+
+    tag = form.get("tag")
+    assert isinstance(tag, str)
+
+    action = form.get("action")
+    assert isinstance(action, str)
+    action = int(action)
+
+    project = form.get("project")
+    assert isinstance(project, str)
+
+    section = form.get("section")
+    assert isinstance(section, str)
+
+    async with Database.make_session() as session:
+        tag_rule = (await session.execute(select(TagRule).where(TagRule.id == id))).scalars().one_or_none()
+
+        if tag_rule is None:
+            return RedirectResponse(settings_router.prefix+f"/asana/tag-rules", status_code=HTTP_303_SEE_OTHER)
+
+        tag_rule.tag = tag
+        tag_rule.action = action
+        tag_rule.project_gid = project
+        tag_rule.section_gid = section
+        session.add(tag_rule)
+        await tag_rule.update_names(ProjectsApi(asana_client), session)
+
+    return RedirectResponse(settings_router.prefix+f"/asana/tag-rules", status_code=HTTP_303_SEE_OTHER)
+
+
+@settings_router.get("/asana/project_sections")
+async def get_project_sections(request: Request, project: str):
+    sections = await ProjectsApi(asana_client).get_sections(project)
+    return settings_template("tag_rules/section_select.html",
+                             {"request": request,
+                              "sections": sections
+                              })
 
 
 @settings_router.get("/asana/additional")
@@ -187,7 +306,8 @@ async def telegram_settings(request: Request):
         users = "\n".join([d.destination_id for d in users])
 
     telegram_token_error = request.session.pop("telegram_token_error", None)
-    telegram_token_error_message = request.session.pop("telegram_token_error_message", None)
+    telegram_token_error_message = request.session.pop(
+        "telegram_token_error_message", None)
     saved = request.session.pop("saved", None)
 
     if telegram_token_error:
@@ -220,7 +340,7 @@ async def telegram_settings_submit(request: Request):
     if bot_token is not None:
         assert isinstance(bot_token, str)
         is_token_correct, token_message = await TgBot.check_token(bot_token)
-        
+
         if is_token_correct:
             await set("telegram_token", bot_token)
         else:

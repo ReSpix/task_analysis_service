@@ -11,7 +11,7 @@
             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
             placeholder="" required value="{{ asana_token }}" />
         <p id="helper-text-explanation" class="mt-2 text-sm text-gray-500 dark:text-gray-400">Создать токен можно <a
-                href="https://app.asana.com/0/my-apps" target="_blank" 
+                href="https://app.asana.com/0/my-apps" target="_blank"
                 class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline">
                 здесь
             </a>
@@ -26,7 +26,7 @@
             class="bg-green-50 border border-green-500 text-green-900 dark:text-green-400 placeholder-green-700 dark:placeholder-green-500 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5 dark:bg-gray-700 dark:border-green-500"
             name="asana_token" value="{{ asana_token }}">
         <p id="helper-text-explanation" class="mt-2 text-sm text-gray-500 dark:text-gray-400">Создать токен можно <a
-                href="https://app.asana.com/0/my-apps" target="_blank" 
+                href="https://app.asana.com/0/my-apps" target="_blank"
                 class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline">
                 здесь
             </a>
@@ -34,46 +34,27 @@
         <p class="mt-2 text-sm text-green-600 dark:text-green-500 auto-fade-out">{{ data['message'] }}</p>
     </div>
     {% if projects is not none %}
-    <div class="grid gap-6 mb-6 md:grid-cols-2">
-        <div class="">
-            <label for="main_project" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Основной
-                проект</label>
-            <select required id="main_project" name="main_project"
-                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                <option hidden>Выберите...</option>
-                {% for project in projects %}
-                <option {{ 'selected' if data['selected_main']==project['gid'] }} value="{{ project['gid'] }}">{{
-                    project['name']}}</option>
-                {% endfor %}
-            </select>
-            {% if data['project_set'] %}
-            {% if data['project_success'] %}
-            <p class="mt-2 text-sm text-green-600 dark:text-green-500 auto-fade-out">{{ data['project_message_1'] }}</p>
-            {% else %}
-            <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ data['project_message_1'] }}</p>
-            {% endif %}
-            {% endif %}
-        </div>
-        <div class="">
-            <label for="sub_project" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Проект
-                субподряда</label>
-            <select required id="sub_project" name="sub_project"
-                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                <option hidden>Выберите...</option>
-                {% for project in projects %}
-                <option {{ "selected" if data['selected_sub']==project['gid'] }} value="{{ project['gid']}}">{{
-                    project['name']}}</option>
-                {% endfor %}
-            </select>
-            {% if data['project_set'] %}
-            {% if data['project_success'] %}
-            <p class="mt-2 text-sm text-green-600 dark:text-green-500 auto-fade-out">{{ data['project_message_2'] }}</p>
-            {% else %}
-            <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ data['project_message_2'] }}</p>
-            {% endif %}
-            {% endif %}
-        </div>
+
+    <div class="">
+        <label for="main_project" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Проект для челленджей</label>
+        <select required id="main_project" name="main_project"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+            <option hidden>Выберите...</option>
+            {% for project in projects %}
+            <option {{ 'selected' if data['selected_main']==project['gid'] }} value="{{ project['gid'] }}">{{
+                project['name']}}</option>
+            {% endfor %}
+        </select>
+        {% if data['project_set'] %}
+        {% if data['project_success'] %}
+        <p class="mt-2 text-sm text-green-600 dark:text-green-500 auto-fade-out">{{ data['project_message_1'] }}</p>
+        {% else %}
+        <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ data['project_message_1'] }}</p>
+        {% endif %}
+        {% endif %}
     </div>
+
+
     {% endif %}
     {% else %}
     <div class="mb-6">
@@ -82,7 +63,7 @@
             class="bg-red-50 border border-red-500 text-red-900 placeholder-red-700 text-sm rounded-lg focus:ring-red-500 dark:bg-gray-700 focus:border-red-500 block w-full p-2.5 dark:text-red-500 dark:placeholder-red-500 dark:border-red-500"
             name="asana_token" value="{{ asana_token }}">
         <p id="helper-text-explanation" class="mt-2 text-sm text-gray-500 dark:text-gray-400">Создать токен можно <a
-                href="https://app.asana.com/0/my-apps" target="_blank" 
+                href="https://app.asana.com/0/my-apps" target="_blank"
                 class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline">
                 здесь
             </a>
@@ -93,9 +74,9 @@
     {% endif %}
     {% if data['project_set'] %}
 
-    <p class="text-gray-500 dark:text-gray-400 mb-6">Проекты настроены, теперь можно <a href="asana/additional"
+    <p class="text-gray-500 dark:text-gray-400 my-6">Проекты настроены, теперь можно <a href="asana/tag-rules"
             class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline">
-            настроить разделы
+            настроить правила тегов
             <svg class="w-4 h-4 ms-2 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
                 viewBox="0 0 14 10">
                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

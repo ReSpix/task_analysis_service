@@ -7,6 +7,7 @@ from sqlalchemy import select, desc
 import logging
 from datetime import datetime, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
+# from asana import get_projects_api
 
 
 class Base(DeclarativeBase):
@@ -134,3 +135,29 @@ class TelegramConfig(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     destination_id: Mapped[str]
     destination_type: Mapped[str]
+
+
+class TagRule(Base):
+    __tablename__ = "tag_rules"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    tag: Mapped[str]
+    action: Mapped[int]
+    project_gid: Mapped[str]
+    project_name: Mapped[Optional[str]]
+    section_gid: Mapped[str]
+    section_name: Mapped[Optional[str]]
+
+    async def update_names(self, projects_api, session: AsyncSession):
+        projects = await projects_api.get_projects()
+        sections = await projects_api.get_sections(self.project_gid)
+
+        for p in projects:
+            if p['gid'] == self.project_gid:
+                self.project_name = p['name']
+
+        for s in sections:
+            if s['gid'] == self.section_gid:
+                self.section_name = s['name']
+
+        session.add(self)

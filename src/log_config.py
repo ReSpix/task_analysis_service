@@ -45,22 +45,22 @@ logging_config = {
     "loggers": {
         "uvicorn": {
             "level": LOG_LEVEL,
-            "handlers": ["rotating_file"],
+            "handlers": ["rotating_file", "stderr"],
             "propagate": False,
         },
         "uvicorn.error": {
             "level": LOG_LEVEL,
-            "handlers": ["rotating_file"],
+            "handlers": ["rotating_file", "stderr"],
             "propagate": False,
         },
         "uvicorn.access": {
             "level": LOG_LEVEL,
-            "handlers": ["rotating_file"],
+            "handlers": ["rotating_file", "stderr"],
             "propagate": False,
         },
         "myapp": {
             "level": LOG_LEVEL,
-            "handlers": ["rotating_file"],
+            "handlers": ["rotating_file", "stderr"],
             "propagate": False,
         },
     },
