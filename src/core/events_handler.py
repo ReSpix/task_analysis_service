@@ -201,7 +201,6 @@ async def on_tag_add_ruled(event: Event):
     task_api = get_task_api()
     assert task_api is not None
 
-
     ticket_gid = event.resource.gid
     res = await task_api.add_to_project(ticket_gid, tag_rule.project_gid)
     assert isinstance(res, dict)
@@ -219,6 +218,15 @@ async def on_tag_add_ruled(event: Event):
         logging.info(
             f"Задача {ticket_gid} удалена из предыдущего проекта")
 
+    notify = (await get("notify_sub_tag_setted")) == "1"
+    task_api = get_task_api()
+    if task_api is not None:
+        task = await task_api.get_task(ticket_gid)
+    if notify:
+        text = f"На задачу '{task['name']}' установлен тег '{tag_rule.tag}'"
+        if tag_rule.project_name is not None:
+            text += f". Задача {'перемещена' if tag_rule.action == 1 else 'добавлена'} в проект '{tag_rule.project_name}'"
+        await TgBot.send_message(text)
 
 async def on_tag_add(event: Event):
     logging.warning("'on_tag_add(event: Event)' function deprecated. Now using 'on_tag_add_ruled(event: Event)'")
