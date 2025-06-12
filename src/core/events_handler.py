@@ -4,7 +4,7 @@ from typing import List
 from sqlalchemy import select
 from asana.client import AsanaApiError
 from asana.models import Event, ActionType
-from database.models import Ticket, Status
+from database.models import Ticket, Status, TagRule
 from database import Database
 import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -20,30 +20,31 @@ update_interval = 5
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
 
 events_api = None
-sub_events_api = None
+# sub_events_api = None
 
 
 async def request_events():
     global events_api
-    global sub_events_api
+    # global sub_events_api
 
-    if events_api is None or sub_events_api is None:
+    if events_api is None:  # or sub_events_api is None:
         main_project_gid = await get("main_project_gid")
-        sub_project_gid = await get("sub_project_gid")
+        # sub_project_gid = await get("sub_project_gid")
 
-        if main_project_gid is not None and sub_project_gid is not None:
-            logging.info(f"{main_project_gid} {sub_project_gid}")
+        if main_project_gid is not None:  # and sub_project_gid is not None:
+            logging.info(f"{main_project_gid}")  # {sub_project_gid}")
             events_api = EventsApi(asana_client, main_project_gid)
             events_api.register_sync_callback(after_downtime_update)
 
-            sub_events_api = EventsApi(asana_client, sub_project_gid)
+            # sub_events_api = EventsApi(asana_client, sub_project_gid)
         else:
             return
 
     events = await events_api.get_events()
-    sub_events = await sub_events_api.get_events()
     await handle_events(events)
-    await handle_events(sub_events)
+
+    # sub_events = await sub_events_api.get_events()
+    # await handle_events(sub_events)
 
 
 def activate_scheduler():
@@ -70,7 +71,7 @@ async def handle_events(events: List[Event]):
         elif e.is_undeleted_task():
             await on_task_undelete(e)
         elif e.is_tag_add():
-            await on_tag_add(e)
+            await on_tag_add_ruled(e)
         elif e.is_tag_removed():
             await on_tag_remove(e)
         elif e.is_story_add():
@@ -161,7 +162,8 @@ async def on_task_delete(event: Event):
         ticket.deleted_at = event.created_at_local_timezone
         session.add(ticket)
 
-        status = Status(text='Удалено', ticket=ticket, datetime=event.created_at_local_timezone)
+        status = Status(text='Удалено', ticket=ticket,
+                        datetime=event.created_at_local_timezone)
         session.add(status)
 
     notify = (await get("notify_deleted")) == "1"
@@ -179,11 +181,48 @@ async def on_task_undelete(event: Event):
         ticket.deleted = False
         session.add(ticket)
 
-        status = Status(text="Удаление отменено", ticket=ticket, datetime=event.created_at_local_timezone)
+        status = Status(text="Удаление отменено", ticket=ticket,
+                        datetime=event.created_at_local_timezone)
         session.add(status)
 
 
+async def on_tag_add_ruled(event: Event):
+    assert event.parent is not None
+    tag = event.parent.name
+
+    async with Database.make_session() as session:
+        query = select(TagRule).where(TagRule.tag == tag)
+        res = await session.execute(query)
+        tag_rule = res.scalar_one_or_none()
+
+    if tag_rule is None:
+        return
+    
+    task_api = get_task_api()
+    assert task_api is not None
+
+
+    ticket_gid = event.resource.gid
+    res = await task_api.add_to_project(ticket_gid, tag_rule.project_gid)
+    assert isinstance(res, dict)
+
+    if 'data' not in res.keys():
+        logging.warning(
+            f"Не удалось установить задачу в проект {tag_rule.project_gid}(gid={tag_rule.project_gid})")
+        return
+    
+    logging.info(
+            f"Задача {ticket_gid} установлена в проект {tag_rule.project_gid}(gid={tag_rule.project_gid})")
+    
+    if tag_rule.action == 1:
+        res = await task_api.remove_from_project(ticket_gid, task_api._client.main_project_gid)
+        logging.info(
+            f"Задача {ticket_gid} удалена из предыдущего проекта")
+
+
 async def on_tag_add(event: Event):
+    logging.warning("'on_tag_add(event: Event)' function deprecated. Now using 'on_tag_add_ruled(event: Event)'")
+    return
     assert event.parent is not None
     assert event.parent.name is not None
 
@@ -191,7 +230,7 @@ async def on_tag_add(event: Event):
 
     if tag is not None and tag.lower() == event.parent.name.lower():
         ticket_gid = event.resource.gid
-
+        
         assert sub_events_api is not None
         sub_project_gid = sub_events_api.get_resource()
 

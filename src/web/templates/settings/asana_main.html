@@ -36,7 +36,7 @@
     {% if projects is not none %}
 
     <div class="">
-        <label for="main_project" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Проект для челленджей</label>
+        <label for="main_project" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Основной проект</label>
         <select required id="main_project" name="main_project"
             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
             <option hidden>Выберите...</option>
@@ -74,7 +74,7 @@
     {% endif %}
     {% if data['project_set'] %}
 
-    <p class="text-gray-500 dark:text-gray-400 my-6">Проекты настроены, теперь можно <a href="asana/tag-rules"
+    <p class="text-gray-500 dark:text-gray-400 my-6">Проект настроен, теперь можно <a href="asana/tag-rules"
             class="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline">
             настроить правила тегов
             <svg class="w-4 h-4 ms-2 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
