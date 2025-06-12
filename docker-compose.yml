@@ -5,23 +5,8 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./src:/app # DEV
       - database:/data
     restart: always
-    # env_file:
-      # - .env
-    command: --reload
-
-  ssh-tunnel:
-    build: ./ssh_tunnel
-    container_name: ssh_tunnel
-    restart: always
-    stop_grace_period: 2s
-    command: >
-      --defaults 
-      --service_on=http:k7analysisservicetest.pagekite.me:main:8000:93bcaxb3d8zdx7cfd3k4dzab93zbecez 
-      --logfile=./logs.txt
-
 
 volumes:
   database:
