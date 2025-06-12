@@ -28,6 +28,10 @@ async def receive_form(data: dict):
         session.add(ticket)
     
     notify = (await get("notify_created")) == "1"
+    notify_created_full = (await get("notify_created_full")) == "1"
 
     if notify:
         await TgBot.send_message(f"Получено '{ticket.title}'")
+
+    if notify_created_full:
+        await TgBot.send_message(f"Получен челлендж:\n\n{str(ticket)}")

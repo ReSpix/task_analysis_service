@@ -78,6 +78,20 @@ class Ticket(Base):
         result = await session.execute(query)
         ticket = result.scalars().first()
         return ticket
+    
+    def __str__(self):
+        if self.additional_info is not None:
+            info = self.additional_info
+            return f"""ФИО Внедренца: {info.worker_fullname}
+Номер наряда из К7: {info.k7_id}
+Офис: {info.office}
+Менеджер по наряду: {info.manager}
+Клиент: {info.client}
+Задачи:
+{info.ticket.text}
+"""
+        else:
+            return f"Задачи: {self.text}"
 
 
 class AdditionalTicketInfo(Base):

@@ -286,6 +286,7 @@ async def telegram_settings(request: Request):
     telegram_token = await get("telegram_token")
 
     notify_created = (await get("notify_created")) == "1"
+    notify_created_full = (await get("notify_created_full")) == "1"
     notify_status_changed = (await get("notify_status_changed")) == "1"
     notify_deleted = (await get("notify_deleted")) == "1"
     notify_sub_tag_setted = (await get("notify_sub_tag_setted")) == "1"
@@ -322,6 +323,7 @@ async def telegram_settings(request: Request):
                               "users": users,
                               "chats": chats,
                               "notify_created": notify_created,
+                              "notify_created_full": notify_created_full,
                               "notify_status_changed": notify_status_changed,
                               "notify_deleted": notify_deleted,
                               "notify_sub_tag_setted": notify_sub_tag_setted,
@@ -348,12 +350,14 @@ async def telegram_settings_submit(request: Request):
             request.session['telegram_token_error_message'] = token_message
 
     notify_created = form.get("created") is not None
+    notify_created_full = form.get("created_full") is not None
     notify_status_changed = form.get("status_changed") is not None
     notify_deleted = form.get("deleted") is not None
     notify_sub_tag_setted = form.get("sub_tag_setted") is not None
     notify_commented = form.get("commented") is not None
 
     await set("notify_created", "1" if notify_created else "0")
+    await set("notify_created_full", "1" if notify_created_full else "0")
     await set("notify_status_changed", "1" if notify_status_changed else "0")
     await set("notify_deleted", "1" if notify_deleted else "0")
     await set("notify_sub_tag_setted", "1" if notify_sub_tag_setted else "0")
