@@ -23,7 +23,8 @@ logging.config.dictConfig(logging_config)
 
 
 app = FastAPI(lifespan=lifespan)
-app.add_middleware(SessionMiddleware, secret_key="ZEfTgTOUTou8cpIlORwmU0fjiEc5j9LlP6Af6j3l4yA")
+app.add_middleware(SessionMiddleware,
+                   secret_key="ZEfTgTOUTou8cpIlORwmU0fjiEc5j9LlP6Af6j3l4yA")
 app.include_router(web_router)
 app.mount("/static", StaticFiles(directory="web/static"), name="static")
 
@@ -42,7 +43,14 @@ def status():
 
 
 @app.get("/receive/{text}")
-async def asana_events(text: str):
+async def receive_yandex_form(text: str):
     data = json.loads(text)
     await receive_form(data)
+    return {'Ok'}
+
+
+@app.get("/receive-test/{text}")
+async def receive_test(text: str):
+    data = json.loads(text)
+    logging.info(f"Получено в тестовый эндпоинт: {data}")
     return {'Ok'}
