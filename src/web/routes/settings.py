@@ -27,24 +27,34 @@ async def submit(request: Request):
     data = request.session.pop("data", None)
     projects = request.session.pop("projects", None)
 
-    if projects == None:
-        main_project_gid = await get("main_project_gid")
-        sub_project_gid = await get("sub_project_gid")
+    main_section_gid = ""
+    main_project_gid = None
 
-        if main_project_gid is not None:  # and sub_project_gid is not None:
-            if data == None:
-                data = {}
-            data['project_set'] = True
-            data['success'] = True
-            data['selected_main'] = main_project_gid
-            # data['selected_sub'] = sub_project_gid
-            projects = await ProjectsApi(asana_client).get_projects()
+    main_project_gid = await get("main_project_gid")
+    main_section_gid = await get("main_section")
+    sub_project_gid = await get("sub_project_gid")
+
+    if main_project_gid is not None:  # and sub_project_gid is not None:
+        if data == None:
+            data = {}
+        data['project_set'] = True
+        data['success'] = True
+        data['selected_main'] = main_project_gid
+        # data['selected_sub'] = sub_project_gid
+        projects = await ProjectsApi(asana_client).get_projects()
+
+    sections = {}
+    if main_project_gid is not None:
+        sections = await ProjectsApi(asana_client).get_sections(main_project_gid)
 
     return settings_template("asana_main.html",
                              {"request": request,
                               "asana_token": asana_token,
                               "data": data,
-                              "projects": projects})
+                              "projects": projects,
+                              "sections": sections,
+                              "selected_section": main_section_gid
+                              })
 
 
 @settings_router.post("/asana")
@@ -54,9 +64,10 @@ async def post_form(request: Request):
     asana_token = form.get("asana_token")
 
     main_project = form.get("main_project")
+    main_section = form.get("section")
     # sub_project = form.get("sub_project")
 
-    if main_project is not None:  # and sub_project is not None:
+    if main_project is not None and main_section is not None:  # and sub_project is not None:
         assert isinstance(main_project, str)
         # assert isinstance(sub_project, str)
         data['project_set'] = True
@@ -71,15 +82,26 @@ async def post_form(request: Request):
         if not main_res:
             data['project_message_1'] = "Выберите проект"
 
+        if main_section is None:
+            data['project_message_2'] = "Выберите колонку основного проекта"
+
         # if not sub_res:
         #     data['project_message_2'] = "Выберите проект"
 
         if main_res:  # and sub_res:
             data['project_success'] = True
             await set("main_project_gid", main_project)
-            # await set("sub_project_gid", sub_project)
+            assert isinstance(main_section, str)
             data['project_message_1'] = "Сохранено"
-            data['project_message_2'] = "Сохранено"
+
+            if main_section is not None:
+                data['section_success'] = True
+                await set("main_section", main_section)
+                data['project_message_2'] = "Сохранено"
+            else:
+                data['project_success'] = False
+                data['project_message_2'] = "Выберите колонку"
+            # await set("sub_project_gid", sub_project)
 
             data['selected_main'] = main_project
             # data['selected_sub'] = sub_project
@@ -211,7 +233,9 @@ async def update_tag_rule(request: Request, id: int):
 
 
 @settings_router.get("/asana/project_sections")
-async def get_project_sections(request: Request, project: str):
+async def get_project_sections(request: Request, project: str = "", main_project: str = ""):
+    if project == "":
+        project = main_project
     sections = await ProjectsApi(asana_client).get_sections(project)
     return settings_template("tag_rules/section_select.html",
                              {"request": request,
