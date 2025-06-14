@@ -156,7 +156,7 @@ async def on_task_delete(event: Event):
         ticket = await Ticket.get_by_gid(session, event.resource.gid)
         if ticket is None:
             logging.warning(
-                f"Удалена несущесвтующая задачи. gid={event.resource.gid}")
+                f"Удалена неотслеживаемая задача задачи. gid={event.resource.gid}")
             return
         ticket.deleted = True
         ticket.deleted_at = event.created_at_local_timezone
@@ -217,6 +217,17 @@ async def on_tag_add_ruled(event: Event):
         res = await task_api.remove_from_project(ticket_gid, task_api._client.main_project_gid)
         logging.info(
             f"Задача {ticket_gid} удалена из предыдущего проекта")
+        
+        async with Database.make_session() as session:
+            ticket = await Ticket.get_by_gid(session, ticket_gid)
+            if ticket is not None:
+                status_move = Status(text=f"Перемещено при установке тега '{tag_rule.tag}'", ticket=ticket)
+                ticket.deleted = True
+                session.add(ticket)
+                session.add(status_move)
+                status_delete = Status(text=f"Удалено", ticket=ticket)
+                session.add(status_delete)
+                
 
     notify = (await get("notify_sub_tag_setted")) == "1"
     task_api = get_task_api()
