@@ -134,6 +134,17 @@ async def tag_rules_list(request: Request):
                               "initialized": asana.initialized
                               })
 
+@settings_router.post("/asana/tag-rules/rule-delete/{id}")
+async def delete_tag_rule(request: Request, id: int):
+    logging.info(f"Запрос на удаление правила {id}")
+    async with Database.make_session() as session:
+        tag_rule = (await session.execute(select(TagRule).where(TagRule.id == id))).scalars().one_or_none()
+        if tag_rule is not None:
+            await session.delete(tag_rule)
+            await session.flush()
+
+    return RedirectResponse(settings_router.prefix+f"/asana/tag-rules/", status_code=HTTP_303_SEE_OTHER)
+
 
 @settings_router.get("/asana/tag-rules/rule/new")
 async def new_tag_rule(request: Request):
