@@ -35,14 +35,13 @@ class TaskApi:
         res = await self._client.get(url)
         return res['data']
 
-    async def add_to_project(self, task_gid: str, project_gid: str):
+    async def add_to_project(self, task_gid: str, project_gid: str, section_gid: str = ""):
         url = f'tasks/{task_gid}/addProject'
 
         body = {'data': {'project': project_gid}}
 
-        section = await get("sub_section")
-        if section is not None:
-            body['data']['section'] = section
+        if section_gid != "":
+            body['data']['section'] = section_gid
 
         res = await self._client.post(url, body)
         return res

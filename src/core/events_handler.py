@@ -202,7 +202,7 @@ async def on_tag_add_ruled(event: Event):
     assert task_api is not None
 
     ticket_gid = event.resource.gid
-    res = await task_api.add_to_project(ticket_gid, tag_rule.project_gid)
+    res = await task_api.add_to_project(ticket_gid, tag_rule.project_gid, tag_rule.section_gid)
     assert isinstance(res, dict)
 
     if 'data' not in res.keys():
