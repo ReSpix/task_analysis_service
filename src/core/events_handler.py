@@ -20,28 +20,48 @@ update_interval = 5
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
 
 events_api = None
+events_apis: list[EventsApi] = []
+__need_to_refresh = False
+def schedule_refresh():
+    __need_to_refresh = True
 # sub_events_api = None
 
 
 async def request_events():
     global events_api
+    global events_apis
     # global sub_events_api
 
-    if events_api is None:  # or sub_events_api is None:
+    if events_api is None or __need_to_refresh:  # or sub_events_api is None:
         main_project_gid = await get("main_project_gid")
+        listen_str = await get("listen_projects")
         # sub_project_gid = await get("sub_project_gid")
 
         if main_project_gid is not None:  # and sub_project_gid is not None:
-            logging.info(f"{main_project_gid}")  # {sub_project_gid}")
+            logging.info(f"Основной проект: {main_project_gid}. События будут отслеживаться")  # {sub_project_gid}")
             events_api = EventsApi(asana_client, main_project_gid)
             events_api.register_sync_callback(after_downtime_update)
 
             # sub_events_api = EventsApi(asana_client, sub_project_gid)
         else:
             return
+        
+        if listen_str is not None:
+            listen = listen_str.split(" ")
+            if len(listen) > 0:
+                for gid in listen:
+                    if main_project_gid is not None and main_project_gid != gid:
+                        events_apis.append(EventsApi(asana_client, gid))
+                        logging.info(f"Будут отслеживаться события проекта {gid}")
+        else:
+            return
 
     events = await events_api.get_events()
     await handle_events(events)
+
+    for api in events_apis:
+        events = await api.get_events()
+        await handle_events(events)
 
     # sub_events = await sub_events_api.get_events()
     # await handle_events(sub_events)
@@ -214,6 +234,7 @@ async def on_tag_add_ruled(event: Event):
             f"Задача {ticket_gid} установлена в проект {tag_rule.project_gid}(gid={tag_rule.project_gid})")
     
     if tag_rule.action == 1:
+        # TODO: удалять из всех проектов, кроме нужного
         res = await task_api.remove_from_project(ticket_gid, task_api._client.main_project_gid)
         logging.info(
             f"Задача {ticket_gid} удалена из предыдущего проекта")

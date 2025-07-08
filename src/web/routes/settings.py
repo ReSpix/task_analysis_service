@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import RedirectResponse
 from sqlalchemy import delete, select
+
+from core.events_handler import schedule_refresh
 from ..templates import settings_template
 import asana
 from asana.client import AsanaClient, AsanaApiError
@@ -67,7 +69,8 @@ async def post_form(request: Request):
     main_section = form.get("section")
     # sub_project = form.get("sub_project")
 
-    if main_project is not None and main_section is not None:  # and sub_project is not None:
+    # and sub_project is not None:
+    if main_project is not None and main_section is not None:
         assert isinstance(main_project, str)
         # assert isinstance(sub_project, str)
         data['project_set'] = True
@@ -123,16 +126,42 @@ async def post_form(request: Request):
     return RedirectResponse(settings_router.prefix+"/asana/", status_code=HTTP_303_SEE_OTHER)
 
 
+@settings_router.post("/asana/projects-listening")
+async def post_ptojects_listening(request: Request):
+    form = await request.form()
+    listen = form.getlist("listen")
+    if len(listen) > 0:
+        assert isinstance(listen, list)
+        assert all(isinstance(item, str) for item in listen)
+
+        listen_str = " ".join(str(item) for item in listen)
+        await set("listen_projects", listen_str)
+    return RedirectResponse(settings_router.prefix+f"/asana/tag-rules/", status_code=HTTP_303_SEE_OTHER)
+
+
 @settings_router.get("/asana/tag-rules")
 async def tag_rules_list(request: Request):
     async with Database.make_session() as session:
         tag_rules = (await session.execute(select(TagRule))).scalars().all()
 
+    avail_projects = await ProjectsApi(asana_client).get_projects()
+    main_project_gid = await get("main_project_gid")
+
+    listen = await get("listen_projects")
+    listen_projects = []
+    if listen is not None:
+        listen_projects = listen.split(" ")
+        schedule_refresh()
+
     return settings_template("tag_rules/list.html",
                              {"request": request,
                               "tag_rules": tag_rules,
-                              "initialized": asana.initialized
+                              "initialized": asana.initialized,
+                              "avail_projects": avail_projects,
+                              "listen_projects": listen_projects,
+                              "main_project_gid": main_project_gid
                               })
+
 
 @settings_router.post("/asana/tag-rules/rule-delete/{id}")
 async def delete_tag_rule(request: Request, id: int):
@@ -197,7 +226,7 @@ async def get_tag_rule(request: Request, id: int):
         tag_rule = (await session.execute(select(TagRule).where(TagRule.id == id))).scalars().one_or_none()
         if tag_rule is None:
             return RedirectResponse(settings_router.prefix+f"/asana/tag-rules", status_code=HTTP_303_SEE_OTHER)
-        
+
     sections = await ProjectsApi(asana_client).get_sections(tag_rule.project_gid)
 
     return settings_template("tag_rules/rule.html",
