@@ -207,7 +207,7 @@ async def on_tag_add_ruled(event: Event):
 
     if 'data' not in res.keys():
         logging.warning(
-            f"Не удалось установить задачу в проект {tag_rule.project_gid}(gid={tag_rule.project_gid})")
+            f"Не удалось установить задачу в проект {tag_rule.project_gid}(gid={tag_rule.project_gid}) в колонку {tag_rule.section_name}(gid={tag_rule.section_gid})")
         return
     
     logging.info(

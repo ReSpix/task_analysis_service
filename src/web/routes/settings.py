@@ -177,7 +177,7 @@ async def new_tag_rule_submit(request: Request):
 async def get_tag_rule(request: Request, id: int):
     data = {}
     tags = await ProjectsApi(asana_client).get_tags()
-    logging.info(tags)
+    # logging.info(tags)
     tags = {tag['name'] for tag in tags}
 
     projects = await ProjectsApi(asana_client).get_projects()
