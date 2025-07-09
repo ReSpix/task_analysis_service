@@ -34,9 +34,11 @@ def schedule_refresh():
 async def request_events():
     global events_api
     global events_apis
+    global __need_to_refresh
     # global sub_events_api
 
     if events_api is None or __need_to_refresh:  # or sub_events_api is None:
+        __need_to_refresh = False
         main_project_gid = await get("main_project_gid")
         listen_str = await get("listen_projects")
         # sub_project_gid = await get("sub_project_gid")
@@ -58,10 +60,10 @@ async def request_events():
                         events_apis.append(EventsApi(asana_client, gid))
                         logging.info(f"Будут отслеживаться события проекта {gid}")
             
-            new_interval = calculate_safe_interval(len(listen) + 1)
-            logging.info(F"События будут запрашиваться для {len(listen)} дополнительных проектов каждые {new_interval} секунд")
-            if scheduler_job is not None:
-                scheduler_job.reschedule(trigger=IntervalTrigger(seconds=new_interval))
+                new_interval = calculate_safe_interval(len(listen) + 1)
+                logging.info(F"События будут запрашиваться для {len(listen)} дополнительных проектов каждые {new_interval} секунд")
+                if scheduler_job is not None:
+                    scheduler_job.reschedule(trigger=IntervalTrigger(seconds=new_interval))
         else:
             return
 
