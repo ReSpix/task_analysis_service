@@ -19,7 +19,7 @@ from utils import calculate_safe_interval
 
 scheduler = AsyncIOScheduler()
 scheduler_job = None
-update_interval = 5
+default_update_interval = 5
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
 
 events_api = None
@@ -64,8 +64,10 @@ async def request_events():
                 logging.info(F"События будут запрашиваться для {len(listen)} дополнительных проектов каждые {new_interval} секунд")
                 if scheduler_job is not None:
                     scheduler_job.reschedule(trigger=IntervalTrigger(seconds=new_interval))
+            else:
+                logging.info("Доплонительных проектов для отслеживания нет")
         else:
-            return
+            logging.info("Нет информации для отслеживания дополнительных проектов")
 
     events = await events_api.get_events()
     await handle_events(events)
@@ -80,7 +82,7 @@ async def request_events():
 
 def activate_scheduler():
     global scheduler_job
-    scheduler_job = scheduler.add_job(request_events, 'interval', seconds=update_interval)
+    scheduler_job = scheduler.add_job(request_events, 'interval', seconds=default_update_interval)
     scheduler.start()
 
 
