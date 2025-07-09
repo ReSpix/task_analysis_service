@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 from dataclasses import dataclass
 from dateutil.relativedelta import relativedelta
+import math
 
 
 def plural_ru(n, one, few, many):
@@ -52,3 +53,22 @@ def create_date_period() -> TimePeroid:
     end = datetime.now()
     start = end - relativedelta(months=1)
     return TimePeroid(start=start, end=end)
+
+
+def calculate_safe_interval(num_objects: int, safety_margin: float = 1.2) -> int:
+    """
+    Рассчитывает безопасный интервал между запросами к API.
+
+    :param num_objects: Количество объектов, каждый из которых делает 1 запрос.
+    :param safety_margin: Коэффициент запаса (по умолчанию 20%).
+    :return: Минимальный интервал в секундах.
+    """
+    if num_objects <= 0:
+        raise ValueError(
+            "Количество объектов должно быть положительным числом")
+
+    requests_per_minute_limit = 110
+    base_interval = (60 * num_objects) / requests_per_minute_limit
+    safe_interval = base_interval * safety_margin
+
+    return max(math.ceil(safe_interval), 5)

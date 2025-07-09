@@ -8,14 +8,17 @@ from database.models import Ticket, Status, TagRule
 from database import Database
 import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.interval import IntervalTrigger
 from asana import get_task_api, asana_client, get_projects_api
 from config_manager import get
 from tgbot import TgBot
 from zoneinfo import ZoneInfo
 from .late_update_tickets import after_downtime_update
+from utils import calculate_safe_interval
 
 
 scheduler = AsyncIOScheduler()
+scheduler_job = None
 update_interval = 5
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
 
@@ -23,6 +26,7 @@ events_api = None
 events_apis: list[EventsApi] = []
 __need_to_refresh = False
 def schedule_refresh():
+    global __need_to_refresh
     __need_to_refresh = True
 # sub_events_api = None
 
@@ -48,11 +52,16 @@ async def request_events():
         
         if listen_str is not None:
             listen = listen_str.split(" ")
-            if len(listen) > 0:
+            if len(listen) > 0 and listen_str != "":
                 for gid in listen:
                     if main_project_gid is not None and main_project_gid != gid:
                         events_apis.append(EventsApi(asana_client, gid))
                         logging.info(f"Будут отслеживаться события проекта {gid}")
+            
+            new_interval = calculate_safe_interval(len(listen) + 1)
+            logging.info(F"События будут запрашиваться для {len(listen)} дополнительных проектов каждые {new_interval} секунд")
+            if scheduler_job is not None:
+                scheduler_job.reschedule(trigger=IntervalTrigger(seconds=new_interval))
         else:
             return
 
@@ -68,7 +77,8 @@ async def request_events():
 
 
 def activate_scheduler():
-    scheduler.add_job(request_events, 'interval', seconds=update_interval)
+    global scheduler_job
+    scheduler_job = scheduler.add_job(request_events, 'interval', seconds=update_interval)
     scheduler.start()
 
 

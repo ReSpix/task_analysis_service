@@ -130,12 +130,14 @@ async def post_form(request: Request):
 async def post_ptojects_listening(request: Request):
     form = await request.form()
     listen = form.getlist("listen")
-    if len(listen) > 0:
-        assert isinstance(listen, list)
-        assert all(isinstance(item, str) for item in listen)
+    assert isinstance(listen, list)
+    assert all(isinstance(item, str) for item in listen)
 
-        listen_str = " ".join(str(item) for item in listen)
-        await set("listen_projects", listen_str)
+    listen_str = " ".join(str(item) for item in listen)
+    await set("listen_projects", listen_str)
+    logging.info(f"Обновлены отслеживаемые проекты: {listen_str}")
+    schedule_refresh()
+
     return RedirectResponse(settings_router.prefix+f"/asana/tag-rules/", status_code=HTTP_303_SEE_OTHER)
 
 
@@ -151,7 +153,6 @@ async def tag_rules_list(request: Request):
     listen_projects = []
     if listen is not None:
         listen_projects = listen.split(" ")
-        schedule_refresh()
 
     return settings_template("tag_rules/list.html",
                              {"request": request,
