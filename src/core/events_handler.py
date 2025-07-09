@@ -235,9 +235,13 @@ async def on_tag_add_ruled(event: Event):
     
     if tag_rule.action == 1:
         # TODO: удалять из всех проектов, кроме нужного
-        res = await task_api.remove_from_project(ticket_gid, task_api._client.main_project_gid)
-        logging.info(
-            f"Задача {ticket_gid} удалена из предыдущего проекта")
+        task_info = await task_api.get_task(ticket_gid)
+        for membership in task_info['memberships']:
+            if membership['project']['gid'] == tag_rule.project_gid:
+                continue
+            res = await task_api.remove_from_project(ticket_gid, membership['project']['gid'])
+            logging.info(
+                f"Задача {ticket_gid} удалена из проекта {membership['project']['gid']}")
         
         async with Database.make_session() as session:
             ticket = await Ticket.get_by_gid(session, ticket_gid)
