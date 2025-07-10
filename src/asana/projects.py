@@ -8,8 +8,12 @@ class ProjectsApi:
 
     async def get_projects(self):
         url = 'projects'
-        res = await self._client.get(url)
-        return res['data']
+        workspaces = (await self._client.workspaces())['data']
+        final_res = []
+        for workspace in workspaces:
+            res = await self._client.get(url, params={"workspace": workspace['gid']})
+            final_res.extend(res['data'])
+        return final_res
 
     async def is_project(self, gid):
         url = "projects/" + gid
