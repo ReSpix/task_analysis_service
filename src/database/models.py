@@ -149,7 +149,7 @@ class TelegramConfig(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     destination_id: Mapped[str]
     destination_type: Mapped[str]
-
+    
 
 class TagRule(Base):
     __tablename__ = "tag_rules"

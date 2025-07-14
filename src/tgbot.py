@@ -21,6 +21,11 @@ class TgBot:
         if token is None:
             token = await get("telegram_token")
         return f'https://api.telegram.org/bot{token}/'
+    
+    @classmethod
+    async def bot_available(cls) -> bool:
+        token = await get("telegram_token")
+        return token is not None
 
     @classmethod
     async def check_token(cls, token):
@@ -39,9 +44,34 @@ class TgBot:
             return (True, "Успешно")
         else:
             return (False, "Неверный токен")
+        
+    @classmethod
+    async def get_chat_title(cls, chat_id: str):
+        if not (await cls.bot_available()):
+            return (False, "Сначала введите токен бота")
+        if chat_id[0] != "-":
+            return (False, "Введите верный ID чата, включая \"-\"")
+        try:
+            async with aiohttp.ClientSession() as session:
+                url = await cls.get_url()
+                ssl_context = ssl.create_default_context(
+                    cafile=certifi.where())
+                async with session.get(url + f"getChat?chat_id={chat_id}", ssl=ssl_context) as response:
+                    data = await response.json()
+        except (ClientConnectionError, ClientConnectorCertificateError) as e:
+            logging.critical(f"Не удалось связаться с Telegram. Ошибка: {e}")
+            return (False, "Не удалось связаться с Telegram для получения названия чата")
+
+        if data['ok']:
+            return (True, data["result"]["title"])
+        else:
+            return (False, "Неверный ID чата. Проверьте ID и убедитесь что бот добавлен в чат")
+
 
     @classmethod
     async def get_chats(cls, text: str = "") -> list[str]:
+        if not (await cls.bot_available()):
+            return []
         async with Database.make_session() as session:
             query = select(TelegramConfig).where(
                 TelegramConfig.destination_type == "chat")
@@ -51,6 +81,8 @@ class TgBot:
 
     @classmethod
     async def send_message_to_chat(cls, chat_id: str, text: str):
+        if not (await cls.bot_available()):
+            return None
         async with aiohttp.ClientSession() as session:
             url = await cls.get_url()
             body = {"chat_id": chat_id, "text": text}
