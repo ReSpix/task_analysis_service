@@ -33,15 +33,22 @@ class ProjectsApi:
     async def get_tags(self):
         url = "tags"
 
-        res = await self._client.get(url)
-        return res['data']
+        workspaces = (await self._client.workspaces())['data']
+        final_res = []
+        for workspace in workspaces:
+            res = await self._client.get(url, params={"workspace": workspace['gid']})
+            final_res.extend(res['data'])
+
+        # res = await self._client.get(url)
+        # return res['data']
+        return final_res
 
     async def get_story(self, story_gid: str):
         url = f"stories/{story_gid}"
 
         res = await self._client.get(url)
         return res['data']
-    
+
     async def get_tasks(self, project_gid):
         url = "projects/" + project_gid + "/tasks"
 
