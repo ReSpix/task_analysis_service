@@ -12,8 +12,17 @@ class TaskApi:
     async def publish_task(self, ticket: Ticket, section: str | None):
         url = 'tasks'
 
+        notes_text = ""
+        if ticket.additional_info is None:
+            notes_text = ticket.text
+        else:
+            info = ticket.additional_info
+            notes_text = f"Менеджер по наряду:\n{info.manager}\n\n" \
+                         f"Клиент:\n{info.client}\n\n" \
+                         f"Задачи:\n{info.ticket.text}"
+
         body = {'data': {'name': ticket.title,
-                         "notes": ticket.text,
+                         "notes": notes_text,
                          "projects": [asana_client.main_project_gid],
                          }}
 
