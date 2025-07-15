@@ -40,10 +40,11 @@ async def telegram_settings(request: Request):
         users = "\n".join([d.destination_id for d in users])
 
         chat_rules = (await session.execute(select(TelegramConfigExtended))).scalars().all()
-        chat_titles = []
-        for chat_rule in chat_rules:
-            success, message = await TgBot.get_chat_title(chat_rule.chat_id)
-            chat_titles.append([success, message])
+        chat_ids = [cr.chat_id for cr in chat_rules]
+        chat_titles = await TgBot.get_chats_titles(chat_ids)
+        # for chat_rule in chat_rules:
+        #     success, message = await TgBot.get_chat_title(chat_rule.chat_id)
+        #     chat_titles.append([success, message])
 
     telegram_token_error = request.session.pop("telegram_token_error", None)
     telegram_token_error_message = request.session.pop(

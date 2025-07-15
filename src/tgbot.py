@@ -5,7 +5,7 @@ from database import Database
 from database.models import TelegramConfig
 import logging
 import asyncio
-from typing import ClassVar
+from typing import ClassVar, Sequence
 from collections import deque
 import certifi
 import ssl
@@ -66,7 +66,7 @@ class TgBot:
             return (True, data["result"]["title"])
         else:
             return (False, "Неверный ID чата. Проверьте ID и убедитесь что бот добавлен в чат")
-
+    
 
     @classmethod
     async def get_chats(cls, text: str = "") -> list[str]:
@@ -119,3 +119,13 @@ class TgBot:
                 await asyncio.sleep(1)
             except Exception as e:
                 logging.critical(e)
+
+    @classmethod
+    async def get_chats_titles(cls, chat_ids: list[str]) -> Sequence[tuple[bool, str]]:
+        """
+        Получить названия чатов для списка chat_id параллельно.
+        Возвращает список кортежей (True/False, title/ошибка) в том же порядке, что и chat_ids.
+        """
+        tasks = [cls.get_chat_title(chat_id) for chat_id in chat_ids]
+        results = await asyncio.gather(*tasks)
+        return results
