@@ -56,7 +56,6 @@ async def telegram_settings(request: Request):
     if telegram_token is None:
         telegram_token = ""
 
-
     return settings_template("telegram.html",
                              {"request": request,
                               "telegram_token": telegram_token,
@@ -175,9 +174,11 @@ async def submit_new_chat_settigns_page(request: Request):
             chat_rules = (await session.execute(select(TelegramConfigExtended).where(TelegramConfigExtended.chat_id == chat_id))).scalars().all()
 
             if len(chat_rules) != 0:
-                request.session['new_tg_chat_error_message'] = f"Для чата \"{message}\" (ID {chat_id}) уже настроены уведомления"
+                request.session[
+                    'new_tg_chat_error_message'] = f"Для чата \"{message}\" (ID {chat_id}) уже настроены уведомления"
             else:
-                request.session['new_tg_chat_success_message'] = f"Успешно сохранена настройка уведомлений для чата '{message}'"
+                request.session[
+                    'new_tg_chat_success_message'] = f"Успешно сохранена настройка уведомлений для чата '{message}'"
 
                 setting = TelegramConfigExtended(
                     chat_id=chat_id,
@@ -190,4 +191,53 @@ async def submit_new_chat_settigns_page(request: Request):
                 )
                 session.add(setting)
 
-    return RedirectResponse(telegram_settings_router.prefix+"/new-chat-settings", status_code=HTTP_303_SEE_OTHER)
+    return RedirectResponse(telegram_settings_router.prefix+f"/chat-settings/{setting.id}", status_code=HTTP_303_SEE_OTHER)
+
+
+@telegram_settings_router.get("/chat-settings/{setting_id}")
+async def show_chat_settings_page(request: Request, setting_id: int):
+    success_message = request.session.pop("new_tg_chat_success_message", None)
+    async with Database.make_session() as session:
+        chat_setting = (await session.execute(select(TelegramConfigExtended).where(TelegramConfigExtended.id == setting_id))).scalars().one_or_none()
+    return settings_template("telegram/chat_settings.html", {"request": request,
+                                                             "chat_setting": chat_setting,
+                                                             "success_message": success_message})
+
+
+@telegram_settings_router.post("/chat-settings/{setting_id}")
+async def update_chat_settings_page(request: Request, setting_id: int):
+    form = await request.form()
+
+    created = form.get("created") is not None
+    created_full = form.get("created_full") is not None
+    status_changed = form.get("status_changed") is not None
+    deleted = form.get("deleted") is not None
+    sub_tag_setted = form.get("sub_tag_setted") is not None
+    commented = form.get("commented") is not None
+
+    async with Database.make_session() as session:
+        chat_setting = (await session.execute(select(TelegramConfigExtended).where(TelegramConfigExtended.id == setting_id))).scalars().one_or_none()
+
+        if chat_setting is not None:
+            chat_setting.created = created
+            chat_setting.created_full = created_full
+            chat_setting.status_changed = status_changed
+            chat_setting.deleted = deleted
+            chat_setting.sub_tag_setted = sub_tag_setted
+            chat_setting.commented = commented
+
+            session.add(chat_setting)
+            request.session['new_tg_chat_success_message'] = "Сохранено"
+
+    return RedirectResponse(telegram_settings_router.prefix+f"/chat-settings/{setting_id}", status_code=HTTP_303_SEE_OTHER)
+
+@telegram_settings_router.post("/chat-settings/{setting_id}/delete")
+async def delete_chat_settings_page(request: Request, setting_id: int):
+    async with Database.make_session() as session:
+        chat_setting = (await session.execute(select(TelegramConfigExtended).where(TelegramConfigExtended.id == setting_id))).scalars().one_or_none()
+
+        if chat_setting is not None:
+            await session.delete(chat_setting)
+            await session.flush()
+
+    return RedirectResponse(telegram_settings_router.prefix, status_code=HTTP_303_SEE_OTHER)
