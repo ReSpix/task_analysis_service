@@ -8,7 +8,7 @@ from ...templates import settings_template
 from starlette.status import HTTP_303_SEE_OTHER
 from config_manager import set, get
 from database import Database
-from database.models import TelegramConfig
+from database.models import TelegramConfig, TelegramConfigExtended
 from tgbot import TgBot
 
 telegram_settings_router = APIRouter(prefix='/settings/telegram')
@@ -39,6 +39,12 @@ async def telegram_settings(request: Request):
         chats = "\n".join([d.destination_id for d in chats])
         users = "\n".join([d.destination_id for d in users])
 
+        chat_rules = (await session.execute(select(TelegramConfigExtended))).scalars().all()
+        chat_titles = []
+        for chat_rule in chat_rules:
+            success, message = await TgBot.get_chat_title(chat_rule.chat_id)
+            chat_titles.append([success, message])
+
     telegram_token_error = request.session.pop("telegram_token_error", None)
     telegram_token_error_message = request.session.pop(
         "telegram_token_error_message", None)
@@ -49,6 +55,7 @@ async def telegram_settings(request: Request):
 
     if telegram_token is None:
         telegram_token = ""
+
 
     return settings_template("telegram.html",
                              {"request": request,
@@ -63,7 +70,9 @@ async def telegram_settings(request: Request):
                               "notify_commented": notify_commented,
                               "saved": saved,
                               "telegram_token_error": telegram_token_error,
-                              "telegram_token_error_message": telegram_token_error_message
+                              "telegram_token_error_message": telegram_token_error_message,
+                              "chat_rules": chat_rules,
+                              "chat_titles": chat_titles
                               })
 
 
@@ -142,6 +151,7 @@ async def new_chat_settigns_page(request: Request):
                                                              "success_message": success_message
                                                              })
 
+
 @telegram_settings_router.post("/new-chat-settings")
 async def submit_new_chat_settigns_page(request: Request):
     form = await request.form()
@@ -161,5 +171,23 @@ async def submit_new_chat_settigns_page(request: Request):
     if not success:
         request.session['new_tg_chat_error_message'] = message
     else:
-        request.session['new_tg_chat_success_message'] = f"Успешно сохранена настройка уведомлений для чата '{message}'"
+        async with Database.make_session() as session:
+            chat_rules = (await session.execute(select(TelegramConfigExtended).where(TelegramConfigExtended.chat_id == chat_id))).scalars().all()
+
+            if len(chat_rules) != 0:
+                request.session['new_tg_chat_error_message'] = f"Для чата \"{message}\" (ID {chat_id}) уже настроены уведомления"
+            else:
+                request.session['new_tg_chat_success_message'] = f"Успешно сохранена настройка уведомлений для чата '{message}'"
+
+                setting = TelegramConfigExtended(
+                    chat_id=chat_id,
+                    created=created,
+                    created_full=created_full,
+                    status_changed=status_changed,
+                    deleted=deleted,
+                    sub_tag_setted=sub_tag_setted,
+                    commented=commented
+                )
+                session.add(setting)
+
     return RedirectResponse(telegram_settings_router.prefix+"/new-chat-settings", status_code=HTTP_303_SEE_OTHER)

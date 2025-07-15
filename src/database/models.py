@@ -151,6 +151,19 @@ class TelegramConfig(Base):
     destination_type: Mapped[str]
     
 
+class TelegramConfigExtended(Base):
+    __tablename__ = "telegram_config_extended"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    chat_id: Mapped[str]
+    created: Mapped[bool]
+    created_full: Mapped[bool]
+    status_changed: Mapped[bool]
+    deleted: Mapped[bool]
+    sub_tag_setted: Mapped[bool]
+    commented: Mapped[bool]
+
+
 class TagRule(Base):
     __tablename__ = "tag_rules"
 
