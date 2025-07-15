@@ -4,7 +4,7 @@ from typing import List
 from sqlalchemy import select
 from asana.client import AsanaApiError
 from asana.models import Event, ActionType
-from database.models import Ticket, Status, TagRule
+from database.models import Ticket, Status, TagRule, TelegramConfigExtended
 from database import Database
 import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -25,6 +25,8 @@ logging.getLogger("apscheduler").setLevel(logging.WARNING)
 events_api = None
 events_apis: list[EventsApi] = []
 __need_to_refresh = False
+
+
 def schedule_refresh():
     global __need_to_refresh
     __need_to_refresh = True
@@ -44,30 +46,36 @@ async def request_events():
         # sub_project_gid = await get("sub_project_gid")
 
         if main_project_gid is not None:  # and sub_project_gid is not None:
-            logging.info(f"Основной проект: {main_project_gid}. События будут отслеживаться")  # {sub_project_gid}")
+            # {sub_project_gid}")
+            logging.info(
+                f"Основной проект: {main_project_gid}. События будут отслеживаться")
             events_api = EventsApi(asana_client, main_project_gid)
             events_api.register_sync_callback(after_downtime_update)
 
             # sub_events_api = EventsApi(asana_client, sub_project_gid)
         else:
             return
-        
+
         if listen_str is not None:
             listen = listen_str.split(" ")
             if len(listen) > 0 and listen_str != "":
                 for gid in listen:
                     if main_project_gid is not None and main_project_gid != gid:
                         events_apis.append(EventsApi(asana_client, gid))
-                        logging.info(f"Будут отслеживаться события проекта {gid}")
-            
+                        logging.info(
+                            f"Будут отслеживаться события проекта {gid}")
+
                 new_interval = calculate_safe_interval(len(listen) + 1)
-                logging.info(F"События будут запрашиваться для {len(listen)} дополнительных проектов каждые {new_interval} секунд")
+                logging.info(
+                    F"События будут запрашиваться для {len(listen)} дополнительных проектов каждые {new_interval} секунд")
                 if scheduler_job is not None:
-                    scheduler_job.reschedule(trigger=IntervalTrigger(seconds=new_interval))
+                    scheduler_job.reschedule(
+                        trigger=IntervalTrigger(seconds=new_interval))
             else:
                 logging.info("Доплонительных проектов для отслеживания нет")
         else:
-            logging.info("Нет информации для отслеживания дополнительных проектов")
+            logging.info(
+                "Нет информации для отслеживания дополнительных проектов")
 
     events = await events_api.get_events()
     await handle_events(events)
@@ -82,7 +90,8 @@ async def request_events():
 
 def activate_scheduler():
     global scheduler_job
-    scheduler_job = scheduler.add_job(request_events, 'interval', seconds=default_update_interval)
+    scheduler_job = scheduler.add_job(
+        request_events, 'interval', seconds=default_update_interval)
     scheduler.start()
 
 
@@ -115,19 +124,45 @@ async def handle_events(events: List[Event]):
 async def on_section_moved(event: Event):
     async with Database.make_session() as session:
         ticket = await Ticket.get_by_gid(session, event.resource.gid)
+        saved_ticket = True
         if ticket is None:
             await on_new_task_added(event)
-            return
+            ticket = await get_asana_task(event.resource.gid)
+            if ticket is None:
+                return
+            saved_ticket = False
+
         assert event.parent is not None
+
+        chats = (await session.execute(select(TelegramConfigExtended).where(TelegramConfigExtended.status_changed == True))).scalars().all()
+        for chat in chats:
+            await TgBot.send_message(chat.chat_id, f"'{ticket.title}' перемещено в '{event.parent.name}'")
+
+        if not saved_ticket:
+            return
 
         status = Status(text=event.parent.name, ticket=ticket,
                         datetime=event.created_at_local_timezone)
         session.add(status)
         logging.info(f"Задача {ticket.title} перемещена в '{status.text}'")
 
-        notify = (await get("notify_status_changed")) == "1"
-        if notify:
-            await TgBot.send_message(f"'{ticket.title}' перемещено в '{status.text}'")
+        # notify = (await get("notify_status_changed")) == "1"
+
+
+async def get_asana_task(gid: str):
+    task_api = get_task_api()
+    assert task_api is not None
+    try:
+        ticket_data = await task_api.get_task(gid)
+    except AsanaApiError as e:
+        if e.status == 404:
+            logging.warning(f"Задачи gid={gid} не существует")
+            logging.warning(e.body['errors'][0]['message'])
+            return None
+
+    ticket = Ticket(
+        gid=ticket_data['gid'], title=ticket_data['name'], text=ticket_data['notes'], created_at=datetime.now())
+    return ticket
 
 
 async def on_new_task_added(event: Event):
@@ -188,10 +223,22 @@ async def on_field_changed(event: Event):
 async def on_task_delete(event: Event):
     async with Database.make_session() as session:
         ticket = await Ticket.get_by_gid(session, event.resource.gid)
+        saved_ticket = True
         if ticket is None:
             logging.warning(
                 f"Удалена неотслеживаемая задача задачи. gid={event.resource.gid}")
+            saved_ticket = False
+            # ticket = await get_asana_task(event.resource.gid)
+            # if ticket is None:
+            #     return
+        
+        chats = (await session.execute(select(TelegramConfigExtended).where(TelegramConfigExtended.deleted == True))).scalars().all()
+        for chat in chats:
+            await TgBot.send_message(chat.chat_id, f"'{event.resource.name}' удалено")
+        
+        if not saved_ticket or ticket is None:
             return
+        
         ticket.deleted = True
         ticket.deleted_at = event.created_at_local_timezone
         session.add(ticket)
@@ -200,9 +247,6 @@ async def on_task_delete(event: Event):
                         datetime=event.created_at_local_timezone)
         session.add(status)
 
-    notify = (await get("notify_deleted")) == "1"
-    if notify:
-        await TgBot.send_message(f"'{ticket.title}' удалено")
 
 
 async def on_task_undelete(event: Event):
@@ -231,7 +275,7 @@ async def on_tag_add_ruled(event: Event):
 
     if tag_rule is None:
         return
-    
+
     task_api = get_task_api()
     assert task_api is not None
 
@@ -243,10 +287,10 @@ async def on_tag_add_ruled(event: Event):
         logging.warning(
             f"Не удалось установить задачу в проект {tag_rule.project_gid}(gid={tag_rule.project_gid}) в колонку {tag_rule.section_name}(gid={tag_rule.section_gid})")
         return
-    
+
     logging.info(
-            f"Задача {ticket_gid} установлена в проект {tag_rule.project_gid}(gid={tag_rule.project_gid})")
-    
+        f"Задача {ticket_gid} установлена в проект {tag_rule.project_gid}(gid={tag_rule.project_gid})")
+
     if tag_rule.action == 1:
         # TODO: удалять из всех проектов, кроме нужного
         task_info = await task_api.get_task(ticket_gid)
@@ -256,30 +300,34 @@ async def on_tag_add_ruled(event: Event):
             res = await task_api.remove_from_project(ticket_gid, membership['project']['gid'])
             logging.info(
                 f"Задача {ticket_gid} удалена из проекта {membership['project']['gid']}")
-        
+
         async with Database.make_session() as session:
             ticket = await Ticket.get_by_gid(session, ticket_gid)
             if ticket is not None:
-                status_move = Status(text=f"Перемещено при установке тега '{tag_rule.tag}'", ticket=ticket)
+                status_move = Status(
+                    text=f"Перемещено при установке тега '{tag_rule.tag}'", ticket=ticket)
                 ticket.deleted = True
                 session.add(ticket)
                 session.add(status_move)
                 status_delete = Status(text=f"Удалено", ticket=ticket)
                 session.add(status_delete)
-                
 
-    notify = (await get("notify_sub_tag_setted")) == "1"
+            chats = (await session.execute(select(TelegramConfigExtended).where(TelegramConfigExtended.sub_tag_setted == True))).scalars().all()
+
     task_api = get_task_api()
     if task_api is not None:
         task = await task_api.get_task(ticket_gid)
-    if notify:
+
+    for chat in chats:
         text = f"На задачу '{task['name']}' установлен тег '{tag_rule.tag}'"
         if tag_rule.project_name is not None:
             text += f". Задача {'перемещена' if tag_rule.action == 1 else 'добавлена'} в проект '{tag_rule.project_name}'"
-        await TgBot.send_message(text)
+        await TgBot.send_message(chat.chat_id, text)
+
 
 async def on_tag_add(event: Event):
-    logging.warning("'on_tag_add(event: Event)' function deprecated. Now using 'on_tag_add_ruled(event: Event)'")
+    logging.warning(
+        "'on_tag_add(event: Event)' function deprecated. Now using 'on_tag_add_ruled(event: Event)'")
     return
     assert event.parent is not None
     assert event.parent.name is not None
@@ -288,7 +336,7 @@ async def on_tag_add(event: Event):
 
     if tag is not None and tag.lower() == event.parent.name.lower():
         ticket_gid = event.resource.gid
-        
+
         assert sub_events_api is not None
         sub_project_gid = sub_events_api.get_resource()
 
@@ -359,16 +407,16 @@ async def on_story_add(event: Event):
         raise
 
     if story['type'] == "comment":
-
-        notify = (await get("notify_commented")) == "1"
-
-        if notify:
-            assert event.parent is not None
-            async with Database.make_session() as session:
+        async with Database.make_session() as session:
+            chats = (await session.execute(select(TelegramConfigExtended).where(TelegramConfigExtended.commented == True))).scalars().all()
+            for chat in chats:
+                assert event.parent is not None
                 ticket_gid = event.parent.gid
                 ticket = await Ticket.get_by_gid(session, ticket_gid)
 
                 if ticket is None:
-                    return
-
-                await TgBot.send_message(f"На '{ticket.title}' добавлен комментарий '{story['text']}'")
+                    ticket = await get_asana_task(event.parent.gid)
+                    if ticket is None:
+                        return
+                    
+                await TgBot.send_message(chat.chat_id, f"На '{ticket.title}' добавлен комментарий '{story['text']}'")

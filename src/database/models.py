@@ -162,6 +162,7 @@ class TelegramConfigExtended(Base):
     deleted: Mapped[bool]
     sub_tag_setted: Mapped[bool]
     commented: Mapped[bool]
+    additional: Mapped[str] = mapped_column(default="")
 
 
 class TagRule(Base):

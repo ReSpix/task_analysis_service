@@ -1,5 +1,6 @@
+from sqlalchemy import select
 from database import Database
-from database.models import Ticket, Status
+from database.models import TelegramConfigExtended, Ticket, Status
 import logging
 from asana import get_task_api
 import asyncio
@@ -26,12 +27,11 @@ async def receive_form(data: dict):
         session.add(status_create)
         session.add(status_section)
         session.add(ticket)
-    
-    notify = (await get("notify_created")) == "1"
-    notify_created_full = (await get("notify_created_full")) == "1"
+        
+        chats_short = (await session.execute(select(TelegramConfigExtended).where(TelegramConfigExtended.status_changed == True))).scalars().all()
+        for chat in chats_short:
+            await TgBot.send_message(chat.chat_id, f"Получено '{ticket.title}'")
 
-    if notify:
-        await TgBot.send_message(f"Получено '{ticket.title}'")
-
-    if notify_created_full:
-        await TgBot.send_message(f"Получен челлендж:\n\n{str(ticket)}")
+        chats_full = (await session.execute(select(TelegramConfigExtended).where(TelegramConfigExtended.status_changed == True))).scalars().all()
+        for chat in chats_full:
+            await TgBot.send_message(chat.chat_id, f"Получен челлендж:\n\n{str(ticket)}")

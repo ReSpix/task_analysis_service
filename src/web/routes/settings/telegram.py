@@ -192,7 +192,7 @@ async def submit_new_chat_settigns_page(request: Request):
                 )
                 session.add(setting)
 
-    return RedirectResponse(telegram_settings_router.prefix+f"/chat-settings/{setting.id}", status_code=HTTP_303_SEE_OTHER)
+    return RedirectResponse(telegram_settings_router.prefix, status_code=HTTP_303_SEE_OTHER)
 
 
 @telegram_settings_router.get("/chat-settings/{setting_id}")

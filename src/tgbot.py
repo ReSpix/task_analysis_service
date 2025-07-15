@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import aiohttp
 from sqlalchemy import select
 from config_manager import get
@@ -11,9 +12,14 @@ import certifi
 import ssl
 from aiohttp.client_exceptions import ClientConnectionError, ClientConnectorCertificateError
 
+@dataclass
+class NotificationData:
+    chat_id: str
+    text: str
+
 
 class TgBot:
-    _message_queue: ClassVar[deque] = deque()
+    _message_queue: ClassVar[deque[NotificationData]] = deque()
     _queue_worker_started: ClassVar[bool] = False
 
     @classmethod
@@ -98,9 +104,10 @@ class TgBot:
                 return None
 
     @classmethod
-    async def send_message(cls, text: str):
+    async def send_message(cls, chat_id: str, text: str):
         """Добавить сообщение в очередь."""
-        cls._message_queue.append(text)
+        logging.info(f"Запланирована отправка сообщения '{text}' в чат {chat_id}")
+        cls._message_queue.append(NotificationData(chat_id=chat_id, text=text))
         if not cls._queue_worker_started:
             asyncio.create_task(cls._start_queue_worker())
             cls._queue_worker_started = True
@@ -112,10 +119,9 @@ class TgBot:
             try:
                 token = await get("telegram_token")
                 if token is not None and cls._message_queue:
-                    text = cls._message_queue.popleft()
-                    chats = await cls.get_chats()
-                    for chat_id in chats:
-                        await cls.send_message_to_chat(chat_id, text)
+                    notification_data = cls._message_queue.popleft()
+                    logging.info(f"Отправляю сообщение '{notification_data.text}' в чат {notification_data.chat_id}")
+                    await cls.send_message_to_chat(notification_data.chat_id, notification_data.text)
                 await asyncio.sleep(1)
             except Exception as e:
                 logging.critical(e)
