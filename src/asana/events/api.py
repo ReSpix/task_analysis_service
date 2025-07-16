@@ -32,7 +32,9 @@ class EventsApi:
                 self.sync = sync
         all_events: list[Event] = []
         original_sync = self.sync
+        has_more_count = 0
         while True:
+            
             params = {'sync': original_sync, "resource": self.resource}
             url = f"events"
             try:
@@ -52,8 +54,9 @@ class EventsApi:
             events = parse_events(data)
             all_events.extend(clear_events(events))
 
-            if data['has_more']:
+            if data['has_more'] and has_more_count < 10:
                 logging.info("События получены, но есть еще, продолжаю запрос")
+                has_more_count += 1
                 continue
             else:
                 await self._update_sync_token(data)
