@@ -88,6 +88,7 @@ async def request_events():
     all_apis = [events_api] + events_apis
 
     results = await asyncio.gather(*[api.get_events() for api in all_apis])
+    logging.info("События получены. Обрабатываю")
     await asyncio.gather(*[handle_events(events) for events in results])
     logging.info("Запрос событий завершен")
 
