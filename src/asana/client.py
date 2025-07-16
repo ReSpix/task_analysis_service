@@ -55,8 +55,8 @@ class AsanaClient:
         self.main_project_gid = main_project_gid
         self.base_url = self.__class__.base_url
 
-    async def get(self, url, params={}):
-        async with aiohttp.ClientSession() as session:
+    async def get(self, url, params={}, timeout: aiohttp.ClientTimeout|None=None):
+        async with aiohttp.ClientSession(timeout=timeout) as session:
             headers = {"authorization": f"Bearer {self.token}"}
             async with session.get(self.base_url + url, headers=headers, params=params) as response:
                 data = await response.json()

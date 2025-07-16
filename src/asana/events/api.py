@@ -6,6 +6,7 @@ from ..client import AsanaClient, AsanaApiError
 from .events_parser import parse_events, clear_events
 import logging
 from config_manager import get, set
+import aiohttp
 
 
 class EventsApi:
@@ -35,8 +36,7 @@ class EventsApi:
             params = {'sync': original_sync, "resource": self.resource}
             url = f"events"
             try:
-                # data = await self._client.get(url, params)
-                data = await asyncio.wait_for(self._client.get(url, params), timeout=10)
+                data = await self._client.get(url, params, aiohttp.ClientTimeout(total=10))
             except AsanaApiError as e:
                 if e.status == 412:
                     await self._update_sync_token(e.body)
