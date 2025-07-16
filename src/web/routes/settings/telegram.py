@@ -204,9 +204,10 @@ async def submit_new_chat_settigns_page(request: Request):
         async with Database.make_session() as session:
             chat_rules = (await session.execute(select(TelegramConfigExtended).where(TelegramConfigExtended.chat_id == chat_id))).scalars().all()
 
-            if len(chat_rules) != 0:
+            if len(chat_rules) != 0 and any([rule.additional == project_id for rule in chat_rules]):
                 request.session[
-                    'new_tg_chat_error_message'] = f"Для чата \"{message}\" (ID {chat_id}) уже настроены уведомления"
+                    'new_tg_chat_error_message'] = f"Для чата \"{message}\" (ID {chat_id}) уже настроены уведомления для этого проекта"
+                return RedirectResponse(telegram_settings_router.prefix+f"/new-chat-settings", status_code=HTTP_303_SEE_OTHER)
             else:
                 request.session[
                     'new_tg_chat_success_message'] = f"Успешно сохранена настройка уведомлений для чата '{message}'"
