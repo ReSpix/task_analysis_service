@@ -60,6 +60,7 @@ async def request_events():
         if listen_str is not None:
             listen = listen_str.split(" ")
             if len(listen) > 0 and listen_str != "":
+                events_apis = []
                 for gid in listen:
                     if main_project_gid is not None and main_project_gid != gid:
                         events_apis.append(EventsApi(asana_client, gid))
