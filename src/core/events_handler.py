@@ -15,6 +15,7 @@ from tgbot import TgBot
 from zoneinfo import ZoneInfo
 from .late_update_tickets import after_downtime_update
 from utils import calculate_safe_interval
+import asyncio
 
 
 scheduler = AsyncIOScheduler()
@@ -77,12 +78,17 @@ async def request_events():
             logging.info(
                 "Нет информации для отслеживания дополнительных проектов")
 
-    events = await events_api.get_events()
-    await handle_events(events)
+    # events = await events_api.get_events()
+    # await handle_events(events)
 
-    for api in events_apis:
-        events = await api.get_events()
-        await handle_events(events)
+    # for api in events_apis:
+    #     events = await api.get_events()
+    #     await handle_events(events)
+
+    all_apis = [events_api] + events_apis
+
+    results = await asyncio.gather(*[api.get_events() for api in all_apis])
+    await asyncio.gather(*[handle_events(events) for events in results])
 
     # sub_events = await sub_events_api.get_events()
     # await handle_events(sub_events)
@@ -236,7 +242,8 @@ async def on_task_delete(event: Event):
         chats = (await session.execute(select(TelegramConfigExtended).where(TelegramConfigExtended.deleted == True))).scalars().all()
         for chat in chats:
             if chat.additional == event.project:
-                await TgBot.send_message(chat.chat_id, f"'{event.resource.name}' удалено")
+                if event.resource.name != "":
+                    await TgBot.send_message(chat.chat_id, f"'{event.resource.name}' удалено")
         
         if not saved_ticket or ticket is None:
             return
@@ -274,6 +281,8 @@ async def on_tag_add_ruled(event: Event):
         query = select(TagRule).where(TagRule.tag == tag)
         res = await session.execute(query)
         tag_rule = res.scalar_one_or_none()
+
+        chats = (await session.execute(select(TelegramConfigExtended).where(TelegramConfigExtended.sub_tag_setted == True))).scalars().all()
 
     if tag_rule is None:
         return
@@ -314,7 +323,7 @@ async def on_tag_add_ruled(event: Event):
                 status_delete = Status(text=f"Удалено", ticket=ticket)
                 session.add(status_delete)
 
-            chats = (await session.execute(select(TelegramConfigExtended).where(TelegramConfigExtended.sub_tag_setted == True))).scalars().all()
+
 
     task_api = get_task_api()
     if task_api is not None:
