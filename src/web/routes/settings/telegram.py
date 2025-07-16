@@ -4,6 +4,9 @@ from fastapi import APIRouter, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy import delete, select
 
+from asana.projects import ProjectsApi
+from asana.client import asana_client
+
 from ...templates import settings_template
 from starlette.status import HTTP_303_SEE_OTHER
 from config_manager import set, get
@@ -57,6 +60,8 @@ async def telegram_settings(request: Request):
     if telegram_token is None:
         telegram_token = ""
 
+    projects = await get_watched_projects()
+
     return settings_template("telegram.html",
                              {"request": request,
                               "telegram_token": telegram_token,
@@ -72,7 +77,8 @@ async def telegram_settings(request: Request):
                               "telegram_token_error": telegram_token_error,
                               "telegram_token_error_message": telegram_token_error_message,
                               "chat_rules": chat_rules,
-                              "chat_titles": chat_titles
+                              "chat_titles": chat_titles,
+                              "projects": projects
                               })
 
 
@@ -146,18 +152,42 @@ async def telegram_settings_submit(request: Request):
 async def new_chat_settigns_page(request: Request):
     error_message = request.session.pop("new_tg_chat_error_message", None)
     success_message = request.session.pop("new_tg_chat_success_message", None)
+    projects = await get_watched_projects()
+    
     return settings_template("telegram/chat_settings.html", {"request": request,
                                                              "error_message": error_message,
-                                                             "success_message": success_message
+                                                             "success_message": success_message,
+                                                             "projects": projects
                                                              })
 
+async def get_watched_projects() -> list[str]:
+    result = []
+    all_projects = await ProjectsApi(asana_client).get_projects()
+
+    main_project = await get("main_project_gid")
+    for p in all_projects:
+        if p['gid'] == main_project:
+            result.append(p)
+            break
+    
+    listen_str = await get("listen_projects")
+    if listen_str is not None:
+        listen = listen_str.split(" ")
+        if len(listen) > 0 and listen_str != "":
+            for p in all_projects:
+                if p['gid'] in listen:
+                    result.append(p)
+
+    return result
 
 @telegram_settings_router.post("/new-chat-settings")
 async def submit_new_chat_settigns_page(request: Request):
     form = await request.form()
 
     chat_id = form.get("chat_id")
+    project_id = form.get("project")
     assert isinstance(chat_id, str)
+    assert isinstance(project_id, str)
 
     created = form.get("created") is not None
     created_full = form.get("created_full") is not None
@@ -188,11 +218,12 @@ async def submit_new_chat_settigns_page(request: Request):
                     status_changed=status_changed,
                     deleted=deleted,
                     sub_tag_setted=sub_tag_setted,
-                    commented=commented
+                    commented=commented,
+                    additional=project_id
                 )
                 session.add(setting)
 
-    return RedirectResponse(telegram_settings_router.prefix, status_code=HTTP_303_SEE_OTHER)
+    return RedirectResponse(telegram_settings_router.prefix+f"/chat-settings/{setting.id}", status_code=HTTP_303_SEE_OTHER)
 
 
 @telegram_settings_router.get("/chat-settings/{setting_id}")
@@ -200,9 +231,12 @@ async def show_chat_settings_page(request: Request, setting_id: int):
     success_message = request.session.pop("new_tg_chat_success_message", None)
     async with Database.make_session() as session:
         chat_setting = (await session.execute(select(TelegramConfigExtended).where(TelegramConfigExtended.id == setting_id))).scalars().one_or_none()
+    projects = await get_watched_projects()
     return settings_template("telegram/chat_settings.html", {"request": request,
                                                              "chat_setting": chat_setting,
-                                                             "success_message": success_message})
+                                                             "success_message": success_message,
+                                                             "selected_project": chat_setting.additional if chat_setting is not None else "",
+                                                             "projects": projects})
 
 
 @telegram_settings_router.post("/chat-settings/{setting_id}")
@@ -216,6 +250,9 @@ async def update_chat_settings_page(request: Request, setting_id: int):
     sub_tag_setted = form.get("sub_tag_setted") is not None
     commented = form.get("commented") is not None
 
+    project_id = form.get("project")
+    assert isinstance(project_id, str)
+
     async with Database.make_session() as session:
         chat_setting = (await session.execute(select(TelegramConfigExtended).where(TelegramConfigExtended.id == setting_id))).scalars().one_or_none()
 
@@ -226,6 +263,7 @@ async def update_chat_settings_page(request: Request, setting_id: int):
             chat_setting.deleted = deleted
             chat_setting.sub_tag_setted = sub_tag_setted
             chat_setting.commented = commented
+            chat_setting.additional = project_id
 
             session.add(chat_setting)
             request.session['new_tg_chat_success_message'] = "Сохранено"

@@ -80,6 +80,9 @@
                     ID чата
                 </th>
                 <th scope="col" class="px-2 py-3">
+                    Проект
+                </th>
+                <th scope="col" class="px-2 py-3">
                     Создание челленджа (кратко)
                 </th>
                 <th scope="col" class="px-2 py-3">
@@ -120,6 +123,11 @@
                     Не удалось получить название чата
                     {% endif %}
                 </td>
+                {% for project in projects %}
+                {% if project['gid'] == chat_rule.additional %}
+                <td class="px-2 py-4"> {{ project['name'] }} </td>
+                {% endif %}
+                {% endfor %}
                 <td class="px-2 py-4"> {{ "✅" if chat_rule.created else "❌" }} </td>
                 <td class="px-2 py-4"> {{ "✅" if chat_rule.created_full else "❌" }} </td>
                 <td class="px-2 py-4"> {{ "✅" if chat_rule.status_changed else "❌" }} </td>
