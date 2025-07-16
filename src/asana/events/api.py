@@ -53,6 +53,7 @@ class EventsApi:
             all_events.extend(clear_events(events))
 
             if data['has_more']:
+                logging.info("События получены, но есть еще, продолжаю запрос")
                 continue
             else:
                 await self._update_sync_token(data)
