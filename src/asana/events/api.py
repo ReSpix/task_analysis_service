@@ -55,9 +55,8 @@ class EventsApi:
                 await self._update_sync_token(data)
                 break
 
-        if len(all_events) > 0:
-            logging.info(
-                f"Получено {len(all_events)} событий с ресурса {self.resource}")
+        
+        logging.info(f"Получено {len(all_events)} событий с ресурса {self.resource}")
             
         for event in all_events:
             event.project = self.resource
