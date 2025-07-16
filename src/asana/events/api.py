@@ -35,7 +35,8 @@ class EventsApi:
             params = {'sync': original_sync, "resource": self.resource}
             url = f"events"
             try:
-                data = await self._client.get(url, params)
+                # data = await self._client.get(url, params)
+                data = await asyncio.wait_for(self._client.get(url, params), timeout=10)
             except AsanaApiError as e:
                 if e.status == 412:
                     await self._update_sync_token(e.body)
@@ -45,6 +46,8 @@ class EventsApi:
                     return []
                 else:
                     raise
+            except asyncio.TimeoutError as e:
+                logging.warning(f"Не удалось получить события с ресурса {self.resource}. Превышено время ожидания запроса 10 секунд.")
 
             events = parse_events(data)
             all_events.extend(clear_events(events))
