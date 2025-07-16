@@ -30,6 +30,7 @@ class Event(BaseModel):
     resource: Resource
     parent: Optional[Resource] = None
     change: Optional[Change] = None
+    project: Optional[str] = ""
 
     @property
     def created_at_local_timezone(self):

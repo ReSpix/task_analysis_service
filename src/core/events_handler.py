@@ -136,7 +136,8 @@ async def on_section_moved(event: Event):
 
         chats = (await session.execute(select(TelegramConfigExtended).where(TelegramConfigExtended.status_changed == True))).scalars().all()
         for chat in chats:
-            await TgBot.send_message(chat.chat_id, f"'{ticket.title}' перемещено в '{event.parent.name}'")
+            if chat.additional == event.project:
+                await TgBot.send_message(chat.chat_id, f"'{ticket.title}' перемещено в '{event.parent.name}'")
 
         if not saved_ticket:
             return
@@ -234,7 +235,8 @@ async def on_task_delete(event: Event):
         
         chats = (await session.execute(select(TelegramConfigExtended).where(TelegramConfigExtended.deleted == True))).scalars().all()
         for chat in chats:
-            await TgBot.send_message(chat.chat_id, f"'{event.resource.name}' удалено")
+            if chat.additional == event.project:
+                await TgBot.send_message(chat.chat_id, f"'{event.resource.name}' удалено")
         
         if not saved_ticket or ticket is None:
             return
@@ -322,7 +324,8 @@ async def on_tag_add_ruled(event: Event):
         text = f"На задачу '{task['name']}' установлен тег '{tag_rule.tag}'"
         if tag_rule.project_name is not None:
             text += f". Задача {'перемещена' if tag_rule.action == 1 else 'добавлена'} в проект '{tag_rule.project_name}'"
-        await TgBot.send_message(chat.chat_id, text)
+        if chat.additional == event.project:
+            await TgBot.send_message(chat.chat_id, text)
 
 
 async def on_tag_add(event: Event):
@@ -418,5 +421,6 @@ async def on_story_add(event: Event):
                     ticket = await get_asana_task(event.parent.gid)
                     if ticket is None:
                         return
-                    
-                await TgBot.send_message(chat.chat_id, f"На '{ticket.title}' добавлен комментарий '{story['text']}'")
+                
+                if chat.additional == event.project:
+                    await TgBot.send_message(chat.chat_id, f"На '{ticket.title}' добавлен комментарий '{story['text']}'")

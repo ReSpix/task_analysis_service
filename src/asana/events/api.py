@@ -29,7 +29,7 @@ class EventsApi:
             sync = await get(self._get_sync_key())
             if sync is not None:
                 self.sync = sync
-        all_events = []
+        all_events: list[Event] = []
         original_sync = self.sync
         while True:
             params = {'sync': original_sync, "resource": self.resource}
@@ -58,6 +58,10 @@ class EventsApi:
         if len(all_events) > 0:
             logging.info(
                 f"Получено {len(all_events)} событий с ресурса {self.resource}")
+            
+        for event in all_events:
+            event.project = self.resource
+        
         return all_events
 
     async def _update_sync_token(self, source: dict):
