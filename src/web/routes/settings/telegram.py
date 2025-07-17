@@ -224,6 +224,9 @@ async def submit_new_chat_settigns_page(request: Request):
                 )
                 session.add(setting)
 
+    if setting is None:
+        return RedirectResponse(telegram_settings_router.prefix+f"/new-chat-settings", status_code=HTTP_303_SEE_OTHER)
+    
     return RedirectResponse(telegram_settings_router.prefix+f"/chat-settings/{setting.id}", status_code=HTTP_303_SEE_OTHER)
 
 
