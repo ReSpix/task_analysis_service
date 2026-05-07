@@ -14,7 +14,7 @@
 - Бэкенд: Python, FastAPI, SQLAlchemy (async), Aiogram
 - БД: SQLite
 - Инфраструктура: Docker, Windows service
-- Архитектура: REST API, Event-Driven, Webhooks
+- Архитектура: RESTful API, Event-Driven, Webhooks
 
 ### Как это работает
 Сервис непрерывно с небольшим интервалом отправляет запросы к Asana для получения событий на досках 
